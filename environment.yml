@@ -1,0 +1,10 @@
+name: reg
+channels:
+  - clinicalgraphics
+  - simpleitk
+dependencies:
+  - python=2.7
+  - clinicalgraphics::vtk
+  - simpleitk::simpleitk
+  - numpy
+
