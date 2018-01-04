@@ -7,4 +7,5 @@ dependencies:
   - clinicalgraphics::vtk
   - simpleitk::simpleitk
   - numpy
+  - packaging
 

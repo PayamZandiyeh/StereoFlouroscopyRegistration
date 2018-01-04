@@ -25,26 +25,18 @@ def get_git_version():
 
     return git_version
 
-def get_version():
+def format_version(git_version):
     '''
-    Returns the software version as a string. Versioning is determined by git tag and is
-    set in the git pipeline. Version should follow 'v#.#.#' where '#' is a number. The
-    three numbers are major, minor, and patch.
-
-    This function may raise an EnvironmentError .
+    Check the version is correct and format it. The checks are as follows:
+        1) Starts with a v
+        2) Has three components seperated by '.'
+        3) Each component is a positive number
     '''
     # Internal util for raise errors
     def raise_bad_tag_error():
         '''Nested function for easy, modifiable error raising inside get_version'''
-        raise EnvironmentError('git tag {} is not a proper version number'.format(git_version))
+        raise EnvironmentError('git tag \'{}\' is not a proper version number'.format(git_version))
 
-    # Get version
-    git_version = get_git_version()
-
-    # Check the version is correct. The checks are as follows:
-    #   1) Starts with a v
-    #   2) Has three components seperated by '.'
-    #   3) Each component is a positive number
     if len(git_version) < 1 or git_version[0].lower() != 'v':
         raise_bad_tag_error()
     tag = git_version[1:]
@@ -70,3 +62,14 @@ def get_version():
     # Format string and return
     version = 'v{0}.{1}.{2}'.format(*new_numbers)
     return version
+
+def get_version():
+    '''
+    Returns the software version as a string. Versioning is determined by git tag and is
+    set in the git pipeline. Version should follow 'v#.#.#' where '#' is a number. The
+    three numbers are major, minor, and patch.
+
+    This function may raise an EnvironmentError .
+    '''
+
+    return format_version(get_git_version())
