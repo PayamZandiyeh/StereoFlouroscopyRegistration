@@ -12,7 +12,7 @@ def get_git_version():
     '''
     # This defines the git command to grab the tag. Note that git uses grep(7) for
     # matching. This regex is not perfect.
-    git_command = ['git', 'describe', '--match', 'v[0-9]*.[0-9]*.[0-9]']
+    git_command = ['git', 'describe', '--match', 'v[0-9]*.[0-9]*.[0-9]', '--abbrev=0']
 
     # Try to execute the git command. Throws a 'CalledProcessError' error if the call
     # returns a non-zero exit status.

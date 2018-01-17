@@ -54,5 +54,11 @@ setup(
             'demos',
             'tests',
         ]
-    )
+    ),
+
+    entry_points={
+        'gui_scripts': [
+            'sfr_visualize=StereoFlouroscopyRegistration.visualization.visualize:main'
+        ],
+    },
 )
