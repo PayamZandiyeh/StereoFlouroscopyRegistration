@@ -1,0 +1,72 @@
+JT_CALIB_INT_EXT
+      1119.19
+     -1.25359
+     0.276089
+     0.327072
+
+0  0  800
+0  0  1
+0  1  0
+
+
+===========================
+
+The identifier 'JT_CALIB_INT_EXT' on the 1st line means this is a file with both the internal/intrinsic calibration parameters and the external/extrinsic parameters.
+
+
+Any information after the 4+9 numbers is ignored by JointTrack.
+
+Do not add spaces on the first line. Space(s) can be freely added or deleted on other lines.
+
+
+---------------------
+Parameters:
+
+
+The first four numbers are the same as 'JT_INTCALIB' files (see 'sample calibration file.txt'):
+
+principal distance;
+x-offset;
+y-offset;
+pixel size/spacing.
+
+
+The next 9 numbers are three vectors:
+
+position of x-ray source;
+image normal;
+image up.
+
+
+---------------------
+Parameters explained:
+
+
+### External parameters:
+
+# position of x-ray source:
+  ...
+
+# image normal:
+The direction of the outward normal of the image, pointing toward the x-ray source. In other words, it is the vector from the Principal Point to the X-ray source point.
+
+# image up:
+The direction of the image's 'up' (i.e., the view up direction of the camera/eye).
+
+* ImageNormal and ImageUp do not have to be unit vectors. However, they have to be orthogonal.
+* All three vectors should be described in a world/lab coordinate system however defined by the user.
+* JointTrack currently does not automatically place the models inside the viewing volume (all models are initially placed at (0,0,0)) if external parameters are specified. Therefore, we suggest the world coordinate system such defined that the origin is within the viewing volume. Othrewise, you may need to load a custom kinematics file in order to bring the models into the viewing volume.
+
+
+
+### Internal parameters: (this section is the same as the one in 'sample calibration file.txt').
+
+# principal distance:  
+Distance from the x-ray source to the projection/image plane. In actual dimension. Sometimes this is called SID(Source Image Distance).
+
+# x/y-offset:
+Location of the principal point relative to the center of the image. In actual dimension, not pixels. X points to right and y points up. Principal point is the perpendicular projection of the x-ray source point on the projection/image plane. In other words, the principal point is a point on the image plane, and if you connect the principle point and the x-ray source point with a straight line, the line is perpendicular to the image plane.
+
+# pixel size/spacing:
+The actual x or y dimension for each pixel on the projection/image plane.
+
