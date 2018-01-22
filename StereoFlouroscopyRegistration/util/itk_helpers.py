@@ -90,7 +90,7 @@ def set_itk_image_direction(image, direction):
 
     Args:
         image (itk.Image):  Input itkImage
-        origin (np.array):  The direction matrix
+        direction (np.array):  The direction matrix
 
     Returns:
         None
