@@ -2,10 +2,12 @@ name: reg
 channels:
   - clinicalgraphics
   - simpleitk
+  - conda-forge
 dependencies:
   - python=2.7
   - clinicalgraphics::vtk
   - simpleitk::simpleitk
+  - conda-forge::itk
   - numpy
   - packaging
 
