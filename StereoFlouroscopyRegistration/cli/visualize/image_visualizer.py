@@ -11,7 +11,7 @@ from StereoFlouroscopyRegistration.pipelines.image_slice_visualizer import Image
 @click.argument('file_name', type=str)
 @click.option('--window', type=float, default=0, help='Window to use for rendering')
 @click.option('--level', type=float, default=-1, help='Level to use for rendering (-1 means to calculate)')
-def slice(file_name, window, level):
+def image(file_name, window, level):
     '''Visualize the slice of a medical image.
 
     <file_name> is expected to be a two or three dimensional file
