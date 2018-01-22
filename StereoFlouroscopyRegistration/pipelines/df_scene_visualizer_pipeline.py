@@ -98,6 +98,7 @@ class DualFlouroSceneVisualizer(BasePipeline):
         # Add renderer to render window
         render_window.AddRenderer(self.renderer)
         self.interactor.SetRenderWindow(render_window)
+        self.renderer.ResetCamera()
 
         return self.interactor
 

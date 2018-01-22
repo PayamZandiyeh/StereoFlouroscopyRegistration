@@ -31,6 +31,12 @@ class ImageSliceVisualizer(BasePipeline):
 
         self.interactor = vtk.vtkRenderWindowInteractor()
         self.interactor_style = vtk.vtkInteractorStyleImage()
+        self.interactor_style.SetInteractionModeToImageSlicing()
+        self.interactor_style.KeyPressActivationOn()
+        self.interactor.SetInteractorStyle(self.interactor_style)
+
+        # Add ability to switch between active layers
+        self.interactor.AddObserver('KeyPressEvent', self._interactor_call_back, -1.0)
 
     def SetInputConnection(self, port):
         '''Set the window for displaying the image.
@@ -138,15 +144,8 @@ class ImageSliceVisualizer(BasePipeline):
 
         # Add renderer to render window
         render_window.AddRenderer(self.renderer)
-
-        self.interactor_style.SetInteractionModeToImageSlicing()
-        self.interactor_style.KeyPressActivationOn()
-
-        self.interactor.SetInteractorStyle(self.interactor_style)
         self.interactor.SetRenderWindow(render_window)
-
-        # Add ability to switch between active layers
-        self.interactor.AddObserver('KeyPressEvent', self._interactor_call_back, -1.0)
+        self.renderer.ResetCamera()
 
         return self.interactor
 
