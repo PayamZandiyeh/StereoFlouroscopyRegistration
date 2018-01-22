@@ -58,7 +58,7 @@ setup(
 
     entry_points={
         'gui_scripts': [
-            'sfr_visualize=StereoFlouroscopyRegistration.visualization.visualize:main'
+            'sfr=StereoFlouroscopyRegistration.cli.cli:main'
         ],
     },
 )

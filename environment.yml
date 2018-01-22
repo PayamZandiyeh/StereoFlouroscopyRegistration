@@ -10,4 +10,5 @@ dependencies:
   - conda-forge::itk
   - numpy
   - packaging
+  - click
 
