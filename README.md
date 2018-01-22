@@ -22,7 +22,7 @@ To setup your local Python environment, do the following.
 1) [Install Anaconda](https://www.anaconda.com/download)
 2) Open a terminal and move to this directory
 3) Install conda dependancies: `conda env create --file environment.yml`
-4) Activate you new found environment: `source activate reg`
+4) Activate you new found environment: `conda activate reg`
 5) Install the package locally: `pip install -e .`
 6) If you are on mac, install one additional dependancy: `conda install python.app`
 
