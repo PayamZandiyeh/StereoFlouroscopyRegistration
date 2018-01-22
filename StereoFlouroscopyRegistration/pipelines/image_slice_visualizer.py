@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
-'''Prebuilt pipeline for reading in and visualizing a 2D medical image'''
+'''Prebuilt pipeline for visualizing a 2D and 3D medical images.'''
 
 from .base_pipeline import BasePipeline
 import vtk
 
 class ImageSliceVisualizer(BasePipeline):
-    '''Prebuilt pipeline for visualizaing a 2D image slice'''
+    '''Prebuilt pipeline for visualizing a 2D and 3D medical images.
+
+    Supports window/level, slicing, changing orientation, and chaning
+    interpolation order.'''
 
     def __init__(self):
         super(ImageSliceVisualizer, self).__init__()
