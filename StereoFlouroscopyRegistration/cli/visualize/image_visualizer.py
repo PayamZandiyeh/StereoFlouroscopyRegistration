@@ -5,7 +5,7 @@ import os
 import click
 import vtk
 from StereoFlouroscopyRegistration.io.read_image import get_vtk_reader_from_file_name
-from StereoFlouroscopyRegistration.pipelines.image_slice_visualizer import ImageSliceVisualizer
+from StereoFlouroscopyRegistration.pipelines.image_slice_visualizer_pipeline import ImageSliceVisualizer
 
 @click.command()
 @click.argument('file_name', type=str)
