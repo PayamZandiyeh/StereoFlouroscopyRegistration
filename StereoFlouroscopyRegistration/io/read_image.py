@@ -23,6 +23,9 @@ def get_vtk_reader_from_file_name(file_name):
 
     # Add readers which are not registered by default
     vtk.vtkImageReader2Factory.RegisterReader(vtk.vtkNIFTIImageReader())
+    vtk.vtkImageReader2Factory.RegisterReader(vtk.vtkNrrdReader())
+
+    # Disable the DICOM reader. It prints too many errors.
     # vtk.vtkImageReader2Factory.RegisterReader(vtk.vtkDICOMImageReader())
 
     # Use factory to return the correct reader
