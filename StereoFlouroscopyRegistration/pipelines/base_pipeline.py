@@ -12,5 +12,12 @@ class BasePipeline:
 
     @abstractmethod
     def set_render_window(self, render_window):
-        '''All derived classes handle setting the render window'''
+        '''All derived classes handle setting the render window.
+
+        Args:
+            render_window (vtk.vtkRenderWindow):    The render window created by the holding class.
+
+        Returns:
+            vtk.vtkRenderWindowInteractor:          The interactor created by the class, if any.
+        '''
         pass

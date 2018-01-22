@@ -10,7 +10,7 @@ from StereoFlouroscopyRegistration.pipelines.image_slice_visualizer import Image
 @click.command()
 @click.argument('file_name', type=str)
 @click.option('--window', type=float, default=0, help='Window to use for rendering')
-@click.option('--level', type=float, default=-1, help='Level to use for rendering (-1 means to calculate)')
+@click.option('--level', type=float, default=os.sys.float_info.min, help='Level to use for rendering (-1 means to calculate)')
 def image(file_name, window, level):
     '''Visualize the slice of a medical image.
 
@@ -22,6 +22,12 @@ def image(file_name, window, level):
     if reader is None:
         os.sys.exit('Cannot find a reader for file \"{}\"'.format(file_name))
     reader.SetFileName(file_name)
+
+    # Print inputs to screen
+    click.echo('Arguments:')
+    click.echo('  file_name: {}'.format(file_name))
+    click.echo('  window:    {}'.format(window))
+    click.echo('  level:     {}'.format(level))
 
     # Setup pipeline
     pipeline = ImageSliceVisualizer()
