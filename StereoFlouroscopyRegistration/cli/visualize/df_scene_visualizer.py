@@ -6,7 +6,8 @@ import click
 import vtk
 from StereoFlouroscopyRegistration.io.read_image import \
     get_vtk_reader_from_file_name, get_itk_homogeneous_coordinate_matrix
-from StereoFlouroscopyRegistration.pipelines.df_scene_visualizer_pipeline import DualFlouroSceneVisualizer
+from StereoFlouroscopyRegistration.pipelines.df_scene_visualizer_pipeline \
+    import DualFlouroSceneVisualizer
 
 @click.command()
 @click.argument('ct_file_name', type=str)
@@ -18,8 +19,15 @@ from StereoFlouroscopyRegistration.pipelines.df_scene_visualizer_pipeline import
 def df_scene(ct_file_name, cam1_file_name, cam2_file_name, window, level, value):
     '''Visualize a dual flouroscope scene.
 
-    <file_name> is expected to be a two or three dimensional file
-    containing a medical image.
+    <ct_file_name> is expected to be a 3D file containing a CT volume.
+    It will be visualized using marching cubes. Note that marching cubes
+    can be slow for large volumes.
+
+    <cam1_file_name> is expected to be a 2D file containign a X-ray image from
+    the first camera. It will be visualized using a window/level transform.
+
+    <cam2_file_name> is expected to be a 2D file containign a X-ray image from
+    the second camera. It will be visualized using a window/level transform.
     '''
     # Read the files in
     readers = []

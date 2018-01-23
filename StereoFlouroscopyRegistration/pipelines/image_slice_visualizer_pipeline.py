@@ -39,7 +39,7 @@ class ImageSliceVisualizer(BasePipeline):
         self.interactor.AddObserver('KeyPressEvent', self._interactor_call_back, -1.0)
 
     def SetInputConnection(self, port):
-        '''Set the window for displaying the image.
+        '''Set the input port.
 
         No tests are performed to validate the input.
 

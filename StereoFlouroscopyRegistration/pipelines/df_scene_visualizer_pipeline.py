@@ -10,7 +10,7 @@ class DualFlouroSceneVisualizer(BasePipeline):
 
     To solve the orientation problem, the user must supply a transform in homogeneous
     coordinates. Internally, the orientation of the image data is dropped. This way,
-    we visualize the data with proper
+    we visualize the data with proper orientation with respect to each other.
     '''
 
     def __init__(self):
@@ -67,37 +67,125 @@ class DualFlouroSceneVisualizer(BasePipeline):
         self.interactor_style = vtk.vtkInteractorStyleTrackballCamera()
         self.interactor.SetInteractorStyle(self.interactor_style)
 
-        # Add ability to switch between active layers
-        self.interactor.AddObserver('KeyPressEvent', self._interactor_call_back, -1.0)
-
     def SetCTInputConnection(self, port):
+        '''Set the input port for the CT volume.
+
+        No tests are performed to validate the input.
+
+        Args:
+            port (int): The input connection port
+
+        Returns:
+            None
+        '''
         self.ct_changer.SetInputConnection(port)
         self.marchingCubes.SetUpdateExtentToWholeExtent() # DO NOT REMOVE!
 
     def SetCam1InputConnection(self, port):
+        '''Set the input port for camera 1.
+
+        No tests are performed to validate the input.
+
+        Args:
+            port (int): The input connection port
+
+        Returns:
+            None
+        '''
         self.xray_changer_1.SetInputConnection(port)
 
     def SetCam2InputConnection(self, port):
+        '''Set the input port for camera 2.
+
+        No tests are performed to validate the input.
+
+        Args:
+            port (int): The input connection port
+
+        Returns:
+            None
+        '''
         self.xray_changer_2.SetInputConnection(port)
 
-    def SetCam1OrientationMatrix(self, matrix):
-        self.xray_slice_1.PokeMatrix(create_vtkMatrix4x4(matrix))
-
-    def SetCam2OrientationMatrix(self, matrix):
-        self.xray_slice_2.PokeMatrix(create_vtkMatrix4x4(matrix))
-
     def SetCTOrientationMatrix(self, matrix):
+        '''Set the display matrix for the CT volume.
+
+        No tests are performed to validate the input.
+
+        Args:
+            matrix (np.array):  The rotation and translation in homogeneous coordiantes
+
+        Returns:
+            None
+        '''
         self.ct_actor.PokeMatrix(create_vtkMatrix4x4(matrix))
         self.marchingCubes.SetUpdateExtentToWholeExtent() # DO NOT REMOVE!
 
+    def SetCam1OrientationMatrix(self, matrix):
+        '''Set the display matrix for camera 1.
+
+        No tests are performed to validate the input.
+
+        Args:
+            matrix (np.array):  The rotation and translation in homogeneous coordiantes
+
+        Returns:
+            None
+        '''
+        self.xray_slice_1.PokeMatrix(create_vtkMatrix4x4(matrix))
+
+    def SetCam2OrientationMatrix(self, matrix):
+        '''Set the display matrix for camera 2.
+
+        No tests are performed to validate the input.
+
+        Args:
+            matrix (np.array):  The rotation and translation in homogeneous coordiantes
+
+        Returns:
+            None
+        '''
+        self.xray_slice_2.PokeMatrix(create_vtkMatrix4x4(matrix))
+
     def SetMarchingCubesValue(self, value):
+        '''Set the value for marching cubes.
+
+        A contour is computed through the image data at this value. See
+        vtkImageMarchingCubes for more information.
+
+        Args:
+            value (float):  The contour value
+
+        Returns:
+            None
+        '''
         self.marchingCubes.SetValue(0, value)
         self.marchingCubes.SetUpdateExtentToWholeExtent() # DO NOT REMOVE!
 
     def SetCamWindow(self, window):
+        '''Set the window for both camera 1 and 2.
+
+        The camera 1 and 2 have the same window and level.
+
+        Args:
+            window (float): The window value
+
+        Returns:
+            None
+        '''
         self.xray_property.SetColorWindow(window)
 
     def SetCamLevel(self, level):
+        '''Set the level for both camera 1 and 2.
+
+        The camera 1 and 2 have the same window and level.
+
+        Args:
+            level (float):  The level value
+
+        Returns:
+            None
+        '''
         self.xray_property.SetColorLevel(level)
 
     def set_render_window(self, render_window):
@@ -116,32 +204,3 @@ class DualFlouroSceneVisualizer(BasePipeline):
         self.renderer.ResetCamera()
 
         return self.interactor
-
-    def _interactor_call_back(self, obj, event):
-        '''Call back function for keyboard interaction.
-
-        The following functionally is defined:
-            w   Print the window/level to screen
-            n   Set interpolation type to nearest neighbour
-            c   Set interpolation type to cubic
-
-        Args:
-            obj (vtk.vtkRenderWindowInteractor):    The object which called the function
-            event (str):                            A string containing the event name
-
-        Returns:
-            None
-        '''
-        if str(self.interactor.GetKeyCode()) == 'w':
-            # Print the current window and level
-            print('Image W/L: {w}/{l}'.format(
-                w=self.GetCamWindow(),
-                l=self.GetCamLevel()))
-        elif str(self.interactor.GetKeyCode()) == 'n':
-            # Set interpolation to nearest neighbour (good for voxel visualization)
-            self.xray_property.SetInterpolationTypeToNearest()
-            self.interactor.Render()
-        elif str(self.interactor.GetKeyCode()) == 'c':
-            # Set interpolation to cubic (makes a better visualization)
-            self.xray_property.SetInterpolationTypeToCubic()
-            self.interactor.Render()
