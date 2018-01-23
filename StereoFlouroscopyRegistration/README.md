@@ -22,5 +22,5 @@ When developing medical image processing and visualization code, many pipelines
 are used over and over again. Such pipelines are instantiated as classes which
 can be directly inserted into graphical programs for command line tools.
 
-## util
+### util
 Various utility functions. Most files should be self explanatory.
