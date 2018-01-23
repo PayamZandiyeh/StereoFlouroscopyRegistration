@@ -8,14 +8,27 @@ from StereoFlouroscopyRegistration.util.vtk_helpers import create_vtkMatrix4x4, 
 class DualFlouroSceneVisualizer(BasePipeline):
     '''Prebuilt pipeline for visualizing a dual flouroscope scene.
 
-    Interactivity rotates the scene around.'''
+    To solve the orientation problem, the user must supply a transform in homogeneous
+    coordinates. Internally, the orientation of the image data is dropped. This way,
+    we visualize the data with proper
+    '''
 
     def __init__(self):
         super(DualFlouroSceneVisualizer, self).__init__()
 
+        # Remove origin information
+        self.xray_changer_1 = vtk.vtkImageChangeInformation()
+        self.xray_changer_1.SetOutputOrigin(0, 0, 0)
+        self.xray_changer_2 = vtk.vtkImageChangeInformation()
+        self.xray_changer_2.SetOutputOrigin(0, 0, 0)
+        self.ct_changer = vtk.vtkImageChangeInformation()
+        self.ct_changer.SetOutputOrigin(0, 0, 0)
+
         # Setup mapper and actor for x-ray images
         self.xray_mapper_1 = vtk.vtkImageSliceMapper()
+        self.xray_mapper_1.SetInputConnection(self.xray_changer_1.GetOutputPort())
         self.xray_mapper_2 = vtk.vtkImageSliceMapper()
+        self.xray_mapper_2.SetInputConnection(self.xray_changer_2.GetOutputPort())
 
         self.xray_property = vtk.vtkImageProperty()
         self.xray_property.SetInterpolationTypeToNearest()
@@ -29,6 +42,7 @@ class DualFlouroSceneVisualizer(BasePipeline):
         self.xray_slice_2.SetProperty(self.xray_property)
 
         self.marchingCubes = vtk.vtkImageMarchingCubes()
+        self.marchingCubes.SetInputConnection(self.ct_changer.GetOutputPort())
         self.marchingCubes.ComputeGradientsOn()
         self.marchingCubes.ComputeNormalsOn()
         self.marchingCubes.ComputeScalarsOn()
@@ -47,6 +61,7 @@ class DualFlouroSceneVisualizer(BasePipeline):
         self.renderer.AddViewProp(self.ct_actor)
         self.renderer.AddViewProp(self.xray_slice_1)
         self.renderer.AddViewProp(self.xray_slice_2)
+        self.renderer.SetBackground(0.1, 0.2, 0.3)
 
         self.interactor = vtk.vtkRenderWindowInteractor()
         self.interactor_style = vtk.vtkInteractorStyleTrackballCamera()
@@ -56,14 +71,14 @@ class DualFlouroSceneVisualizer(BasePipeline):
         self.interactor.AddObserver('KeyPressEvent', self._interactor_call_back, -1.0)
 
     def SetCTInputConnection(self, port):
-        self.marchingCubes.SetInputConnection(port)
+        self.ct_changer.SetInputConnection(port)
         self.marchingCubes.SetUpdateExtentToWholeExtent() # DO NOT REMOVE!
 
     def SetCam1InputConnection(self, port):
-        self.xray_mapper_1.SetInputConnection(port)
+        self.xray_changer_1.SetInputConnection(port)
 
     def SetCam2InputConnection(self, port):
-        self.xray_mapper_2.SetInputConnection(port)
+        self.xray_changer_2.SetInputConnection(port)
 
     def SetCam1OrientationMatrix(self, matrix):
         self.xray_slice_1.PokeMatrix(create_vtkMatrix4x4(matrix))

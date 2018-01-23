@@ -11,4 +11,5 @@ dependencies:
   - numpy
   - packaging
   - click
+  - future
 
