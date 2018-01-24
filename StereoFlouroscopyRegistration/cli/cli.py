@@ -4,6 +4,7 @@
 import click
 from .visualize.visualize import visualize
 from .create.create import create
+from .util.util import util
 
 @click.group()
 def main():
@@ -11,3 +12,4 @@ def main():
 
 main.add_command(visualize)
 main.add_command(create)
+main.add_command(util)
