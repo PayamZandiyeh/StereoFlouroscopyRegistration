@@ -15,7 +15,7 @@ def get_vtk_reader_from_file_name(file_name):
     vtkNIFTIImageReader, vtkDICOMImageReader.
 
     Args:
-        file_name (string):     Image dimensions
+        file_name (string):     Input file name on disk
 
     Returns:
         vtk.vtkImageReader2:    The vtkImageReader2
@@ -52,7 +52,7 @@ def get_itk_homogeneous_coordinate_matrix(file_name):
     expect.
 
     Args:
-        file_name (string):     Image dimensions
+        file_name (string):     Input file name on disk
 
     Returns:
         np.array:               The orientation matrix in homogeneous coordinates
@@ -79,3 +79,46 @@ def get_itk_homogeneous_coordinate_matrix(file_name):
     orientation_matrix[image_dimensions, image_dimensions] = 1
 
     return orientation_matrix
+
+def get_itk_image_type(file_name):
+    '''Determine the image type for a file on disk.
+
+    This can largely be replaced with itk.imread except for DICOM images
+    where the image type must be known.
+
+    If the file doesn't exist or an itk.ImageIO cannot be found, None is
+    returned. This functions throws a KeyError if the input type is not
+    supported.
+
+    See https://gist.github.com/fbudin69500/e58cf629cc6069b3cdcc for example
+    code. This may fail for int type images. Typically, you can get away with
+    reading those images as short.
+
+    Args:
+        file_name (string): Input file name on disk
+
+    Returns:
+        itk.Image:  The created image type
+    '''
+    # Try to get the ImageIO given the file name
+    imageIO = itk.ImageIOFactory.CreateImageIO(file_name, itk.ImageIOFactory.ReadMode)
+    if imageIO is None:
+        return None
+    imageIO.SetFileName(file_name)
+    imageIO.ReadImageInformation()
+
+    # Get pixel type and dimension
+    pixel_type_as_string = imageIO.GetComponentTypeAsString(imageIO.GetComponentType())
+    pixel_type = get_itk_image_type.component_type_to_itk_type_dict[pixel_type_as_string]
+    dimensions = imageIO.GetNumberOfDimensions()
+
+    return itk.Image[pixel_type, dimensions]
+
+# Create dictionary to map from ImageIOBase type to ctype
+get_itk_image_type.component_type_to_itk_type_dict = {
+    'float':            itk.F,  'double':           itk.D,
+    'unsigned_char':    itk.UC, 'unsigned_short':   itk.US, 'unsigned_int': itk.UI,
+    'unsigned_long':    itk.UL, 'signed_char':      itk.SC, 'signed_short': itk.SS,
+    'signed int':       itk.SI, 'signed_long':      itk.SL, 'bool':         itk.B,
+    'short':            itk.SS
+}
