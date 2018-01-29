@@ -60,9 +60,9 @@ def df_example(ct_file_name, cam1_file_name, cam2_file_name, force):
     ct_source.NormalizedOff()
     ct_source.SetSigma([5, 15, 25])
     ct_source.SetScale(255)
-    ct_source.SetSpacing([1, 1, 1])
+    ct_source.SetSpacing([0.5, 0.5, 0.5])
     ct_source.SetOrigin([0, 0, 0])
-    ct_source.SetSize([100, 100, 100])
+    ct_source.SetSize([200, 200, 200])
     ct_source.SetMean([50, 50, 50])
 
     # Create cam1
@@ -70,9 +70,9 @@ def df_example(ct_file_name, cam1_file_name, cam2_file_name, force):
     cam1_source.NormalizedOff()
     cam1_source.SetSigma([5, 15, 25])
     cam1_source.SetScale(255)
-    cam1_source.SetSpacing([1, 1, 1])
+    cam1_source.SetSpacing([2, 2, 2])
     cam1_source.SetOrigin([0+cam1_dx, 0, 0])
-    cam1_source.SetSize([100, 100, 1])
+    cam1_source.SetSize([50, 50, 1])
     cam1_source.SetMean([0+cam1_dx, 50, 50])
     cam1_source.SetDirection(cam1_direction)
 
