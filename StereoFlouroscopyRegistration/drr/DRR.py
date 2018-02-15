@@ -1,14 +1,11 @@
 # This script generates Digitally Reconstructed Radiograph (DRR) from a given 
 # 3D image to given 2D image plane(s)
 
-# ISSUES - 
-# 1- I don't know how to set the direction of the output image
-
 import itk # imports insight Toolkit
 import numpy as np
 import sys
-from Functions import ChangeImageDirection
-
+from StereoFlouroscopyRegistration.drr.Functions import ChangeImageDirection
+from StereoFlouroscopyRegistration.drr.CalibrationUsingJointTrack import CalibrationTool
 
 
 #%% -------------------------------- Generated Inputs --------------------------------- 
@@ -40,6 +37,16 @@ verbose = False      # Verbose details of all steps.
 
 nCam = 2 # Number of cameras 
 
+basedir = '/Volumes/Storage/Projects/Registration/QuickData/OAKneeCadaverCd001_NM_Cam1.txt'
+cam1_path = ''
+calibration_folder_path = ''
+file_name_suffix = ''
+output_path = 'OUTPUT'
+
+camera_1 = CalibrationTool()
+camera_1.SetCalibrationFile(basedir)
+#%%
+camera_1.get_calibration_data(basedir, calibration_folder_path, cam1_path + file_name_suffix)
 
 #%%------------------ Starting the main body of the code ---------------- 
 # -------------------- Reader -------------------------
