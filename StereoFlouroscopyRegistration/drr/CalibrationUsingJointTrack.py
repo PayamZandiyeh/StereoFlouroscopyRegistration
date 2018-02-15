@@ -75,17 +75,17 @@ class CalibrationTool:
         """
         self.SetCalibrationFileName(filename)
         
-        open_file = open(self.GetCalibrationFileName(), "r")                                     # Reading the file containing the Calibration information. 
-        self.CalibrationFileText = open_file.readlines()                    # Text Document loaded from the Calibration file (informative but to be replaced by a private variable rather than public)
+        open_file = open(self.GetCalibrationFileName(), "r")                                                                    # Reading the file containing the Calibration information. 
+        self.CalibrationFileText = open_file.readlines()                                                                        # Text Document loaded from the Calibration file (informative but to be replaced by a private variable rather than public)
 
-        self.SetPrincipalDistance(float(self.CalibrationFileText[1].strip())) # Source to Image distance (SID) or principal distance. 
-        self.SetOffSets(float(self.CalibrationFileText[2].strip()),float(self.CalibrationFileText[3].strip())) # Setting the offsets in x and y directions. 
-        self.SetPixelSize(float(self.CalibrationFileText[4].strip()),float(self.CalibrationFileText[4].strip()),1)                      # The pixel size in x,y, and z directions. The image is 2D so the third direction is always 1.         
-        self.SetFocalPoint([float(x) for x in self.CalibrationFileText[6].strip().split()])                                               # The Focal point of the x-ray (the 3D position of the x-ray in space)       
-        self.SetImageDirectionN([float(x) for x in self.CalibrationFileText[7].strip().split()])                                 # The normal to the image plane. 
-        self.SetImageDirectionU([float(x) for x in self.CalibrationFileText[8].strip().split()])                                 # The Upward direction of the 2D image
-        self.SetImageDirectionH(numpy.cross(self.ImageDirectionNormal, self.ImageDirectionUp))                                 # The Horizontal direction of the 2D image      
-        self.SetDirectionMatrix(numpy.matrix([self.ImageDirectionUp,self.ImageDirectionHorizontal,self.ImageDirectionNormal]))   # The direction matrix of the 2D image in 3D space.
+        self.SetPrincipalDistance(float(self.CalibrationFileText[1].strip()))                                                   # Source to Image distance (SID) or principal distance. 
+        self.SetOffSets(float(self.CalibrationFileText[2].strip()),float(self.CalibrationFileText[3].strip()))                  # Setting the offsets in x and y directions. 
+        self.SetPixelSize(float(self.CalibrationFileText[4].strip()),float(self.CalibrationFileText[4].strip()),1)              # The pixel size in x,y, and z directions. The image is 2D so the third direction is always 1.         
+        self.SetFocalPoint([float(x) for x in self.CalibrationFileText[6].strip().split()])                                     # The Focal point of the x-ray (the 3D position of the x-ray in space)       
+        self.SetImageDirectionN([float(x) for x in self.CalibrationFileText[7].strip().split()])                                # The normal to the image plane. 
+        self.SetImageDirectionU([float(x) for x in self.CalibrationFileText[8].strip().split()])                                # The Upward direction of the 2D image
+        self.SetImageDirectionH(numpy.cross(self.GetImageDirectionU(), self.GetImageDirectionN()))                              # The Horizontal direction of the 2D image    UxN = H  
+        self.SetDirectionMatrix(numpy.matrix([self.GetImageDirectionH(),self.GetImageDirectionU(),self.GetImageDirectionN()]))  # The direction matrix of the 2D image in 3D space.
         
         
     def SetCalibrationFileName(self,filename):
@@ -136,7 +136,7 @@ class CalibrationTool:
         self.ImageDirectionUp = imageDirectionUp
         
     def GetImageDirectionU(self):
-        return(self.GetImageDirectionU)
+        return(self.ImageDirectionUp)
     
     def SetImageDirectionN(self,imageDirectionNormal):
         self.ImageDirectionNormal = imageDirectionNormal

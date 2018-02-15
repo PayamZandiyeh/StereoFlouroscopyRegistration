@@ -44,7 +44,7 @@ file_name_suffix = ''
 output_path = 'OUTPUT'
 
 camera_1 = CalibrationTool()
-camera_1.SetCalibrationFile(basedir)
+camera_1.SetCalibration(basedir)
 #%%
 camera_1.get_calibration_data(basedir, calibration_folder_path, cam1_path + file_name_suffix)
 
