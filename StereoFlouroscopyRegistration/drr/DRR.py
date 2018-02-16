@@ -4,6 +4,7 @@
 import itk # imports insight Toolkit
 import numpy as np
 import sys
+import datetime
 from StereoFlouroscopyRegistration.drr.Functions import ChangeImageDirection
 from StereoFlouroscopyRegistration.drr.CalibrationUsingJointTrack import CalibrationTool
 
@@ -16,37 +17,30 @@ direction = np.identity(3,dtype=np.double)
 
 #%% -------------------------------- INPUTS --------------------------------- 
 input_filename  = '/Volumes/Storage/Projects/Registration/QuickData/OA-BEADS-CT.nii'
-output_filename = '/Volumes/Storage/Projects/Registration/QuickData/test.nii'
-
-
-sizeOutput = [512,512,1] # The size of output image
-spaceOutput= [0.3,0.3,1] # The resolution (spacing) along x,y,z directions of output image
-originOutput = [0.0,0.0,0.0] # The origin of the output 2D image plane
-
+outputDirectory = '/Volumes/Storage/Projects/Registration/QuickData/'
+outputExtension = '.nii' # Store the output image in nifti format. 
 threshold  = 0.
+defaultPixelValue = 0
+minOut = 0
+maxOut = 255
 
 rot = [90.,0.,0.]   # Rotation in degrees in x, y, and z direction. 
 trs = [10. ,10. ,10.]   # translation in x, y, and z directions. 
 cor = [2. ,4. ,6.]   # offset of the rotation from the center of image (3D)
 
+sizeOutput = [512,512,1] # The size of output image
 
-directionOutput = direction # Direction of Image plane 3x3 matrix. 
 
-focalPoint = [80.,80.,100.]  # Position of the x-ray source. 
 verbose = False      # Verbose details of all steps. 
 
-nCam = 2 # Number of cameras 
 
-basedir = '/Volumes/Storage/Projects/Registration/QuickData/OAKneeCadaverCd001_NM_Cam1.txt'
-cam1_path = ''
-calibration_folder_path = ''
-file_name_suffix = ''
-output_path = 'OUTPUT'
-
-camera_1 = CalibrationTool()
-camera_1.SetCalibration(basedir)
 #%%
-camera_1.get_calibration_data(basedir, calibration_folder_path, cam1_path + file_name_suffix)
+nCam = 3 # Number of cameras 
+calibrationFile = ['/Volumes/Storage/Projects/Registration/QuickData/OAKneeCadaverCd001_NM_Cam1.txt' ,    # Calibration file for Camera 1
+                   '/Volumes/Storage/Projects/Registration/QuickData/OAKneeCadaverCd001_NM_Cam2.txt' ]    # Calibration file for Camera 2
+
+if len(calibrationFile) != nCam :
+    raise Exception('Number of Calibration files', len(calibrationFile),'do not correspond with the number of Cameras',nCam)
 
 #%%------------------ Starting the main body of the code ---------------- 
 # -------------------- Reader -------------------------
@@ -100,69 +94,89 @@ transform.SetCenter(center)                     # Setting the center of rotation
 if verbose :
     print(transform)
     
+   #%% 
+for ii in range(nCam):
     
     
+    imageCalibrationInfo = CalibrationTool() # Setting up the image calibration info class. 
+    imageCalibrationInfo.SetCalibration(calibrationFile[ii]) # Assign the information from the calibration file to the imageCalibrationInfo class. 
     
+    spaceOutput= imageCalibrationInfo.GetPixelSize() # The resolution (spacing) along x,y,z directions of output image
+
+
+############ NEEDS TO BE CHANGED #################################################
+    originOutput = [0.0,0.0,0.0] # The origin of the output 2D image plane 
+##################################################################################
     
+    directionOutput = imageCalibrationInfo.GetDirectionMatrix() # Direction of Image plane 3x3 matrix. 
+    focalPoint = imageCalibrationInfo.GetFocalPoint()  # Position of the x-ray source. 
     
+    #%% ----------------- Ray Cast Interpolator 
+    # In this part the Ray Cast interpolator is defined and applied to the input
+    # image data. 
     
-#%% ----------------- Ray Cast Interpolator 
-# In this part the Ray Cast interpolator is defined and applied to the input
-# image data. 
-
-InterpolatorType = itk.RayCastInterpolateImageFunction[InputImageType,ScalarType]       # Defining the interpolator type from the template. 
-interpolator     = InterpolatorType.New()               # Pointer to the interpolator
-
-interpolator.SetInputImage(inputImage)                  # Setting the input image data
-interpolator.SetThreshold(threshold)                    # Setting the output threshold
-interpolator.SetFocalPoint(itk.Point.D3(focalPoint))    # Setting the focal point (x-ray source location)
-interpolator.SetTransform(transform)                    # Setting the transform (here identity)
-
-if verbose:
-    print(interpolator)
-#%%----------------- Resample Image Filter ------------------------
-    # In this part the resample image filter to map a 3D image to 2D image plane with desired specs is designed
+    InterpolatorType = itk.RayCastInterpolateImageFunction[InputImageType,ScalarType]       # Defining the interpolator type from the template. 
+    interpolator     = InterpolatorType.New()               # Pointer to the interpolator
     
-FilterType = itk.ResampleImageFilter[InputImageType,OutputImageType]                    # Defining the resample image filter type. 
-resamplefilter = FilterType.New()               # Pointer to the filter
-resamplefilter.SetInput(inputImage)             # Setting the input image data 
-resamplefilter.SetDefaultPixelValue( 0 )        # Setting the default Pixel value
-resamplefilter.SetInterpolator(interpolator)    # Setting the interpolator
-resamplefilter.SetTransform(transform)          # Setting the transform
-resamplefilter.SetSize(sizeOutput)              # Setting the size of the output image. 
-resamplefilter.SetOutputSpacing(spaceOutput)    # Setting the spacing(resolution) of the output image. 
-resamplefilter.SetOutputOrigin(originOutput)    # Setting the output origin of the image
-ChangeImageDirection(oldDirection=resamplefilter.GetOutputDirection(),newDirection=directionOutput,DimensionOut=3)     # Setting the output direction of the image  --- resamplefilter.SetImageDirection(args) was not working properly
-
-resamplefilter.Update()                         # Updating the resample image filter.
-
-if verbose:
-    print(resamplefilter)
-#%%---------------- Rescaler Image Filter --------------------------
-RescalerFilterType = itk.RescaleIntensityImageFilter[InputImageType,OutputImageType]    # Defining the rescale image filter. 
-rescaler = RescalerFilterType.New()             # Pointer to the rescale filter
-rescaler.SetOutputMinimum(0)                    # Minimum output
-rescaler.SetOutputMaximum(255)                  # Maximum output 
-rescaler.SetInput(resamplefilter.GetOutput())   # Setting the input to the image filter. 
-
-if verbose:
-    print(rescaler)
-
-#%% ------------------ Writer ------------------------------------
-    # The output of the resample filter can then be passed to a writer to
-    # save the DRR image to a file.
-WriterType = itk.ImageFileWriter[OutputImageType]
-writer = WriterType.New()
-
-writer.SetFileName(output_filename)
-writer.SetInput(rescaler.GetOutput())
-
-try:
-    print("Writing image: " + output_filename)
-    writer.Update()
-    print("Image Printed Successfully")
-except ValueError: 
-    print("ERROR: ExceptionObject cauth! \n")
-    print(ValueError)
-    sys.exit()
+    interpolator.SetInputImage(inputImage)                  # Setting the input image data
+    interpolator.SetThreshold(threshold)                    # Setting the output threshold
+    interpolator.SetFocalPoint(itk.Point.D3(focalPoint))    # Setting the focal point (x-ray source location)
+    interpolator.SetTransform(transform)                    # Setting the transform (here identity)
     
+    if verbose:
+        print(interpolator)
+    #%%----------------- Resample Image Filter ------------------------
+        # In this part the resample image filter to map a 3D image to 2D image plane with desired specs is designed
+        
+    FilterType = itk.ResampleImageFilter[InputImageType,OutputImageType]                    # Defining the resample image filter type. 
+    resamplefilter = FilterType.New()                                                       # Pointer to the filter
+    resamplefilter.SetInput(inputImage)                                                     # Setting the input image data 
+    resamplefilter.SetDefaultPixelValue(defaultPixelValue)                                  # Setting the default Pixel value
+    resamplefilter.SetInterpolator(interpolator)                                            # Setting the interpolator
+    resamplefilter.SetTransform(transform)                                                  # Setting the transform
+    resamplefilter.SetSize(sizeOutput)                                                      # Setting the size of the output image. 
+    resamplefilter.SetOutputSpacing(spaceOutput)                                            # Setting the spacing(resolution) of the output image. 
+    resamplefilter.SetOutputOrigin(originOutput)                                            # Setting the output origin of the image
+    ChangeImageDirection(oldDirection=resamplefilter.GetOutputDirection(),newDirection=directionOutput,DimensionOut=3)     # Setting the output direction of the image  --- resamplefilter.SetImageDirection(args) was not working properly
+    
+    resamplefilter.Update()                                                                 # Updating the resample image filter.
+    
+    if verbose:
+        print(resamplefilter)
+    #%%---------------- Rescaler Image Filter --------------------------
+    RescalerFilterType = itk.RescaleIntensityImageFilter[InputImageType,OutputImageType]    # Defining the rescale image filter. 
+    rescaler = RescalerFilterType.New()             # Pointer to the rescale filter
+    rescaler.SetOutputMinimum(minOut)               # Minimum output
+    rescaler.SetOutputMaximum(maxOut)               # Maximum output 
+    rescaler.SetInput(resamplefilter.GetOutput())   # Setting the input to the image filter. 
+    
+    if verbose:
+        print(rescaler)
+    
+    #%% ------------------ Writer ------------------------------------
+        # The output of the resample filter can then be passed to a writer to
+        # save the DRR image to a file.
+    WriterType = itk.ImageFileWriter[OutputImageType]
+    writer = WriterType.New()
+    
+    outputPath = '/Volumes/Storage/Projects/Registration/QuickData/Cam'+str(ii+1)
+    if ii == 0:
+        time = datetime.datetime.now() 
+        
+    outputName = ('/Cam'+str(ii+1)+'rx'+str(int(rot[0]))+'ry'+str(int(rot[1]))+'rz'+str(int(rot[2]))+'tx'
+                 + str(int(trs[0]))+'ty'+str(int(trs[1]))+'tz'+str(int(trs[2]))+'y'+str(time.year)+'m'+str(time.month)
+                 +'d'+str(time.day)+'hr'+str(time.hour)+'m'+str(time.minute)+'s'+str(time.second)+ outputExtension)
+    output_filename = outputPath+outputName
+    
+    writer.SetFileName(output_filename)
+    writer.SetInput(rescaler.GetOutput())
+    
+    try:
+        print("Writing image: " + output_filename)
+        writer.Update()
+        print("Image Printed Successfully")
+    except ValueError: 
+        print("ERROR: ExceptionObject cauth! \n")
+        print(ValueError)
+        sys.exit()
+        
