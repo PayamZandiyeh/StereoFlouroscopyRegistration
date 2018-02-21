@@ -1,6 +1,7 @@
 import numpy
 import os
 import itk
+import SimpleITK as sitk
 
 class CalibrationTool:
     """Read and store calibration data from camera calibration"""
@@ -13,17 +14,14 @@ class CalibrationTool:
         self.y_offset = 0
         self.pixel_size = 0
 
-        self.ImageDirectionUp = []
-        self.ImageDirectionNormal = []
-        self.ImageDirectionHorizontal = []
+        self.xray_position = []
+        self.image_normal = []
+        self.image_up = []
 
         self.camera_path = 0
         self.image_all = []
 
-        self.DirectionMatrix = itk.Matrix[itk.D, 3, 3]()
-        self.image_origin = []
-        
-        self.image_size = []
+        self.direction_matrix = []
 
     def SetCalibration(self, filename):
         """SetCalibration(self,filename)
@@ -82,12 +80,13 @@ class CalibrationTool:
 
         self.SetPrincipalDistance(float(self.CalibrationFileText[1].strip()))                                                   # Source to Image distance (SID) or principal distance. 
         self.SetOffSets(float(self.CalibrationFileText[2].strip()),float(self.CalibrationFileText[3].strip()))                  # Setting the offsets in x and y directions. 
-        self.SetPixelSize(float(self.CalibrationFileText[4].strip()),float(self.CalibrationFileText[4].strip()))              # The pixel size in x,y, and z directions. The image is 2D so the third direction is always 1.         
+        self.SetPixelSize(float(self.CalibrationFileText[4].strip()),float(self.CalibrationFileText[4].strip()),1)              # The pixel size in x,y, and z directions. The image is 2D so the third direction is always 1.         
         self.SetFocalPoint([float(x) for x in self.CalibrationFileText[6].strip().split()])                                     # The Focal point of the x-ray (the 3D position of the x-ray in space)       
         self.SetImageDirectionN([float(x) for x in self.CalibrationFileText[7].strip().split()])                                # The normal to the image plane. 
         self.SetImageDirectionU([float(x) for x in self.CalibrationFileText[8].strip().split()])                                # The Upward direction of the 2D image
-        self.SetImageDirectionH([float(x) for x in numpy.cross(self.GetImageDirectionU(), self.GetImageDirectionN()).tolist()])                     # The Horizontal direction of the 2D image    UxN = H  
+        self.SetImageDirectionH(numpy.cross(self.GetImageDirectionU(), self.GetImageDirectionN()))                              # The Horizontal direction of the 2D image    UxN = H  
         self.SetDirectionMatrix(numpy.matrix([self.GetImageDirectionH(),self.GetImageDirectionU(),self.GetImageDirectionN()]))  # The direction matrix of the 2D image in 3D space.
+        
         
     def SetCalibrationFileName(self,filename):
         '''Setting the Calibration Filename '''
@@ -104,28 +103,28 @@ class CalibrationTool:
     def GetPrincipalDistance(self):
         '''Getting the source to image distance from x-ray to image plane. Also known as principal distance'''
         return(self.PrincipalDistance)
-
+    
     def SetOffSets(self,offset_x,offset_y):
         '''Setting the offsets in x and y direction in the image plane '''
         self.Offset_x = offset_x
         self.Offset_y = offset_y
-
+    
     def GetOffSets(self):
         '''Returing the offset values in x and y directions respectively'''
         return (self.Offset_x , self.Offset_y)
-
-    def SetPixelSize(self,res_x,res_y):
-        self.PixelSize = [float(res_x),float(res_y)]
+    
+    def SetPixelSize(self,res_x,res_y,res_z):
+        self.PixelSize = numpy.matrix([float(res_x),float(res_y),float(res_z)])
         
     def GetPixelSize(self):
         return(self.PixelSize)
-
+    
     def SetFocalPoint(self,fPoints):
         self.FocalPoint = fPoints 
         
     def GetFocalPoint(self):
         return(self.FocalPoint)
-
+    
     def SetImageDirectionH(self,imageDirectionH):
         '''Setting the Horizontal image direction'''
         self.ImageDirectionHorizontal = imageDirectionH
@@ -138,7 +137,7 @@ class CalibrationTool:
         
     def GetImageDirectionU(self):
         return(self.ImageDirectionUp)
-
+    
     def SetImageDirectionN(self,imageDirectionNormal):
         self.ImageDirectionNormal = imageDirectionNormal
 
@@ -146,150 +145,75 @@ class CalibrationTool:
         return(self.ImageDirectionNormal)
         
     def SetDirectionMatrix(self,directionMatrix):
-        DirectionVnl = self.DirectionMatrix.GetVnlMatrix()
-        DirectionVnl.set_identity()
-
-        DirectionVnl.put(0,0,directionMatrix.item((0,0)))
-        DirectionVnl.put(0,1,directionMatrix.item((0,1)))
-        DirectionVnl.put(0,2,directionMatrix.item((0,2)))
-
-        DirectionVnl.put(1,0,directionMatrix.item((1,0)))
-        DirectionVnl.put(1,1,directionMatrix.item((1,1)))
-        DirectionVnl.put(1,2,directionMatrix.item((1,2)))
-
-        DirectionVnl.put(2,0,directionMatrix.item((2,0)))
-        DirectionVnl.put(2,1,directionMatrix.item((2,1)))
-        DirectionVnl.put(2,2,directionMatrix.item((2,2)))
+        self.DirectionMatrix = directionMatrix
 
     def GetDirectionMatrix(self):
-        return self.DirectionMatrix
+        return(self.DirectionMatrix)
         
-    def OpenDirectory(self, base_dir, image_path):
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    def open_directory(self, base_dir, image_path):
         self.camera_path = base_dir + image_path
         self.image_all = os.listdir(self.camera_path)
 
-    def SetImageOrigin(self, origin):
-        self.image_origin = origin
-
-    def GetImageOriginX(self):
-        return self.image_origin[0]
-
-    def GetImageOriginY(self):
-        return self.image_origin[1]
-
-    def GetImageOriginZ(self):
-        return self.image_origin[2]
-
-    def SetImageSize(self, inputDir, inputFiles, pixelType):
-        image = itk.imread(os.path.join(inputDir,inputFiles[0]),pixelType)
-        region = image.GetLargestPossibleRegion()
-        w, h = region.GetSize()
-        z = len(inputFiles)
-
-        self.image_size = [w, h, z]
-
-    def GetImageSizeW(self):
-        return self.image_size[0]
-
-    def GetImageSizeH(self):
-        return self.image_size[1]
-
-    def GetImageSizeZ(self):
-        return self.image_size[2]
-
-    def GetImageSize(self):
-        return self.image_size
-
-    def GetImageOrigin(self):
-        return self.image_origin
-
-    def ShiftOrigin(self):
-        w = self.GetImageSizeW()
-        h = self.GetImageSizeH()
+    def shift_origin(self, image):
         '''Move the image origin from center to lower left for ITK '''
-        deltaV = [x * ((float(w) / 2.0) * self.PixelSize[0]) for x in self.ImageDirectionHorizontal]
-        deltaU = [x * ((float(h) / 2.0) * self.PixelSize[0]) for x in self.ImageDirectionUp]
+        w, h, z = image.GetSize()
+
+        deltaV = (float(w) / 2) * self.PixelSize[0] * self.ImageDirectionHorizontal
+        deltaU = (float(h) / 2) * self.PixelSize[0] * self.ImageDirectionUp
         
-        P = numpy.asarray([[float(x) * self.Offset_x for x in self.ImageDirectionHorizontal], [float(y) * self.Offset_y for y in self.ImageDirectionUp], 0])
-        Q = numpy.asarray([deltaV, deltaU, 0])
-
-        # origin = self.GetFocalPoint - [x * self.GetPrincipalDistance() for x in self.GetImageDirectionN()] - P - Q
-
-        origin = [0,0,0]
-        self.SetImageOrigin(origin)
-
-    def Stack2DImage(self, inputDir):
-        inputDimension = 2
-        outputDimension = 3
-
-        pixelType = itk.F
-
-        inputImageType = itk.Image[pixelType, inputDimension]
-        outputImageType = itk.Image[pixelType, outputDimension]
-
-        reader = itk.ImageFileReader[inputImageType].New()
-
-        img = itk.JoinSeriesImageFilter[inputImageType, outputImageType].New()
+        P = [self.Offset_x *self.ImageDirectionHorizontal, self.Offset_y*self.ImageDirectionUp, 0]
+        Q = [deltaV, deltaU, 0]
         
-        inputFiles = os.listdir(inputDir)
-        self.SetImageSize(inputDir, inputFiles, pixelType)
+        origin = self.GetFocalPoint()-self.GetPrincipalDistance() * self.GetImageDirectionN()-P-Q
 
-        for ii in range(0, self.GetImageSizeZ()):
-            image = itk.imread(os.path.join(inputDir,inputFiles[ii]),pixelType)
-            image.SetSpacing(self.GetPixelSize())
-            img.SetInput(ii, image)
         
-        img.SetSpacing(self.GetImageSizeZ())
+        return origin
 
-        outputImg = self.SetMetadataIn3DImage(img, outputImageType)
+    def write_metadata(self, img_vol):
+        origin = self.shift_origin(img_vol)
+        img_vol.SetSpacing([self.PixelSize[0],self.PixelSize[0],1])
+        img_vol.SetOrigin(origin)
 
-        return outputImg
+        img_vol.SetDirection(self.GetDirectionMatrix)
 
-    def Write3DImageToFile(self, outputDir, outputName, img):
-        outputDimension = 3
-        pixelType = itk.F
-        outputImageType = itk.Image[pixelType, outputDimension]
-        
-        index = itk.Index[outputDimension]()
-        index.Fill(0)
+        return img_vol
 
-        region = img.GetLargestPossibleRegion()
-        size = region.GetSize()
+    def write_new_image(self, output_path):
+        for i in range(0, len(self.image_all)-1):
+            img = itk.imread(os.path.join(self.camera_path, self.image_all[i]))
+ #           img = itk.imread(os.path.join(self.camera_path, self.image_all[i])
+            img_vol = sitk.JoinSeries(img)
+            corrected_img = self.write_metadata(img_vol)
 
-        region.SetSize(size)
-        region.SetIndex(index)
+            img_path = os.path.join(self.camera_path, output_path)
+            filename = self.image_all[i].split('.')
+            itk.imwrite(corrected_img, os.path.join(img_path, 'EDITED-' + filename[0] + '.mha'))
 
-        img.SetRegions(region)
-        img.Allocate(True)
-        img.Update()
-
-        writer = itk.ImageFileWriter[outputImageType].New()
-        writer.SetFileName(os.path.join(outputDir,outputName))
-        writer.SetInput(img)
-        writer.Update()
-
-    def SetMetadataIn3DImage(self, img, imageType):
-        self.ShiftOrigin()
-        spacing = img.GetSpacing()
-
-        outputImg = itk.ChangeInformationImageFilter[imageType].New()
-        outputImg.SetInput(img.GetOutput())
-        
-        outputImg.SetOutputSpacing(spacing)
-        outputImg.ChangeSpacingOn()
-
-        outputImg.SetOutputOrigin(self.GetImageOrigin())
-        outputImg.ChangeOriginOn()
-        
-        outputImg.SetOutputDirection(self.GetDirectionMatrix())
-        outputImg.ChangeDirectionOn()
-        
-        outputImg.UpdateOutputInformation()
-                        
-        return outputImg.GetOutput()
-
-    def Get3DImageOutput(self, calibrationDir, inputDir, outputDir, outputFileName):
-        self.SetCalibration(calibrationDir)
-        img = self.Stack2DImage(inputDir)
-        self.Write3DImageToFile(outputDir, outputFileName, img)
+#    def open_edited(self, path):
+#        img = itk.imread(path)
+    
+    def write_3d(self,inputPath,outputPath,filename):
+        img = itk.imread(inputPath)
+        filename = filename.split('.')
+        itk.imwrite(img, os.path.join(outputPath, 'EDITED-' + filename[0] + '.mha'))
 
