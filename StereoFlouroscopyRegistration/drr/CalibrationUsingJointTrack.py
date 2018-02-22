@@ -169,7 +169,7 @@ class CalibrationTool:
         self.image_all = os.listdir(self.camera_path)
 
     def SetImageOrigin(self, origin):
-        self.image_origin = origin
+        self.image_origin = origin[0]
 
     def GetImageOriginX(self):
         return self.image_origin[0]
@@ -204,18 +204,28 @@ class CalibrationTool:
         return self.image_origin
 
     def ShiftOrigin(self):
+        '''Move the image origin from center to lower left for ITK '''
+
         w = self.GetImageSizeW()
         h = self.GetImageSizeH()
-        '''Move the image origin from center to lower left for ITK '''
-        deltaV = [x * ((float(w) / 2.0) * self.PixelSize[0]) for x in self.ImageDirectionHorizontal]
-        deltaU = [x * ((float(h) / 2.0) * self.PixelSize[0]) for x in self.ImageDirectionUp]
+
+        deltaX, deltaY = self.GetOffSets()
+        deltaV = (float(w) / 2.0) * self.PixelSize[0]
+        deltaU = (float(h) / 2.0) * self.PixelSize[0]
+        pdist = self.GetPrincipalDistance()
+
+        P = numpy.matrix([deltaX, deltaY, 0])
+        Q = numpy.matrix([deltaV, deltaU, 0])
+
+        M = numpy.matrix([self.GetImageDirectionH(),self.GetImageDirectionU(),self.GetImageDirectionN()])
         
-        P = numpy.asarray([[float(x) * self.Offset_x for x in self.ImageDirectionHorizontal], [float(y) * self.Offset_y for y in self.ImageDirectionUp], 0])
-        Q = numpy.asarray([deltaV, deltaU, 0])
+        R = numpy.matmul(M, numpy.transpose(numpy.add(P, Q)))
+        N = numpy.transpose(numpy.multiply(pdist, numpy.matrix(self.GetImageDirectionN())))
+        F = numpy.transpose(numpy.matrix(self.GetFocalPoint()))
 
-        # origin = self.GetFocalPoint - [x * self.GetPrincipalDistance() for x in self.GetImageDirectionN()] - P - Q
+        origin = numpy.transpose(numpy.subtract(numpy.subtract(F, N), R))
+        origin = origin.tolist()
 
-        origin = [0,0,0]
         self.SetImageOrigin(origin)
 
     def Stack2DImage(self, inputDir):
