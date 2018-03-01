@@ -120,8 +120,16 @@ class CalibrationTool:
     def GetFilterInfo(self):
         return self.FilterInfo
     
-    def SetImage(self,inputImage):
-        self.Image = inputImage
+    def SetImage(self,imagePointer):
+        
+        region = imagePointer.GetLargestPossibleRegion()
+        w, h   = region.GetSize()
+        z = 1
+        
+        self.Image = imagePointer
+        self.SetOutputImageSize(w,h,z)            # Setting the size of image in the output
+        self.SetGlobalOriginForImagePlane()       # Setting the global origin of the image. 
+ 
     
     def GetImage(self):
         return self.Image
@@ -267,9 +275,9 @@ class CalibrationTool:
         
         ReaderType      = itk.ImageFileReader[inputImageType]
         reader          = ReaderType.New()
-            
+        
         reader.SetFileName(inputFileName)
-    
+        
         try:
             reader.Update()
             inputImage = reader.GetOutput()
@@ -279,19 +287,12 @@ class CalibrationTool:
             print("ERROR: ExceptionObject cauth! \n")
             print(ValueError)
             sys.exit()
-        
-        region = inputImage.GetLargestPossibleRegion()
-        w, h   = region.GetSize()
-        z = 1
-        
-        self.SetOutputImageSize(w,h,z)            # Setting the size of image in the output
-        self.SetGlobalOriginForImagePlane()       # Setting the global origin of the image. 
-            
+    
+        self.SetImage(inputImage)
+                 
         inputImage.SetSpacing(self.GetPixelSize()) # Setting the spacing of the input image according to the calibration information. 
         
         filterJS.SetInput(0, inputImage)   # Adding an image to the join series filter. 
-    
-    
         filterJS.SetSpacing(1.) # Setting the spacing in the new dimension. 
         filterJS.Update()
         

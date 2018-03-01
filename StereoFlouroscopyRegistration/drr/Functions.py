@@ -12,7 +12,7 @@ def ChangeImageDirection(oldDirection,newDirection,DimensionOut):
     vnlMatrix = oldDirection.GetVnlMatrix()
     for i in range(DimensionOut):
         for j in range(DimensionOut):
-            vnlMatrix.put(i,j,newDirection[i][j])
+            vnlMatrix.put(i,j,newDirection[i,j])
 
 
        #%% 

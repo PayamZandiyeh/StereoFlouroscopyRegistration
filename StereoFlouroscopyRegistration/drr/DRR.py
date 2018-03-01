@@ -1,12 +1,12 @@
-e# This script generates Digitally Reconstructed Radiograph (DRR) from a given 
+# This script generates Digitally Reconstructed Radiograph (DRR) from a given 
 # 3D image to given 2D image plane(s)
 
 import itk # imports insight Toolkit
 import numpy as np
 import sys
 import datetime
-from StereoFlouroscopyRegistration.drr.Functions import ChangeImageDirection
-from StereoFlouroscopyRegistration.drr.CalibrationUsingJointTrack import CalibrationTool
+import Functions
+import CalibrationUsingJointTrack 
 
 
 #%% -------------------------------- Generated Inputs --------------------------------- 
@@ -28,7 +28,7 @@ rot = [90.,0.,0.]   # Rotation in degrees in x, y, and z direction.
 trs = [10. ,10. ,10.]   # translation in x, y, and z directions. 
 cor = [2. ,4. ,6.]   # offset of the rotation from the center of image (3D)
 
-sizeOutput = [512,512,1] # The size of output image
+outSize = [512,512,1] # The size of output image
 
 
 verbose = False      # Verbose details of all steps. 
@@ -97,16 +97,16 @@ if verbose :
    #%% 
 for ii in range(nCam):
     
-    
-    imageCalibrationInfo = CalibrationTool() # Setting up the image calibration info class. 
-    imageCalibrationInfo.SetCalibration(calibrationFile[ii]) # Assign the information from the calibration file to the imageCalibrationInfo class. 
+    #%%
+    imageCalibrationInfo = CalibrationUsingJointTrack.CalibrationTool() # Setting up the image calibration info class. 
+    imageCalibrationInfo.SetCalibrationInfo(calibrationFile[ii]) # Assign the information from the calibration file to the imageCalibrationInfo class. 
     
     spaceOutput= imageCalibrationInfo.GetPixelSize() # The resolution (spacing) along x,y,z directions of output image
-
-
-############ NEEDS TO BE CHANGED #################################################
-    originOutput = [0.0,0.0,0.0] # The origin of the output 2D image plane 
-##################################################################################
+    
+    imageCalibrationInfo.SetOutputImageSize(outSize[0],outSize[1],1)  # Setting the size of the output image. 
+    imageCalibrationInfo.SetGlobalOriginForImagePlane()               # Setting the global origin of the output image. 
+    
+    originOutput = imageCalibrationInfo.GetGlobalOriginForImagePlane() # Setting the output origin. 
     
     directionOutput = imageCalibrationInfo.GetDirectionMatrix() # Direction of Image plane 3x3 matrix. 
     focalPoint = imageCalibrationInfo.GetFocalPoint()  # Position of the x-ray source. 
@@ -134,10 +134,10 @@ for ii in range(nCam):
     resamplefilter.SetDefaultPixelValue(defaultPixelValue)                                  # Setting the default Pixel value
     resamplefilter.SetInterpolator(interpolator)                                            # Setting the interpolator
     resamplefilter.SetTransform(transform)                                                  # Setting the transform
-    resamplefilter.SetSize(sizeOutput)                                                      # Setting the size of the output image. 
-    resamplefilter.SetOutputSpacing(spaceOutput)                                            # Setting the spacing(resolution) of the output image. 
+    resamplefilter.SetSize(outSize)                                                         # Setting the size of the output image. 
+    resamplefilter.SetOutputSpacing(itk.Vector.D3([spaceOutput[0],spaceOutput[1],1]))       # Setting the spacing(resolution) of the output image. 
     resamplefilter.SetOutputOrigin(originOutput)                                            # Setting the output origin of the image
-    ChangeImageDirection(oldDirection=resamplefilter.GetOutputDirection(),newDirection=directionOutput,DimensionOut=3)     # Setting the output direction of the image  --- resamplefilter.SetImageDirection(args) was not working properly
+    Functions.ChangeImageDirection(oldDirection=resamplefilter.GetOutputDirection(),newDirection=directionOutput,DimensionOut=3)     # Setting the output direction of the image  --- resamplefilter.SetImageDirection(args) was not working properly
     
     resamplefilter.Update()                                                                 # Updating the resample image filter.
     
@@ -149,6 +149,7 @@ for ii in range(nCam):
     rescaler.SetOutputMinimum(minOut)               # Minimum output
     rescaler.SetOutputMaximum(maxOut)               # Maximum output 
     rescaler.SetInput(resamplefilter.GetOutput())   # Setting the input to the image filter. 
+    rescaler.Update() 
     
     if verbose:
         print(rescaler)
