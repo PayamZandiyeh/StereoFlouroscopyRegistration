@@ -8,13 +8,14 @@ def ChangeImageDirection(oldDirection,newDirection,DimensionOut):
             DimensionOut : The dimension of the image that we like to output (2D or 3D)
             
     '''
+    #%%
     vnlMatrix = oldDirection.GetVnlMatrix()
     for i in range(DimensionOut):
         for j in range(DimensionOut):
             vnlMatrix.put(i,j,newDirection[i][j])
 
 
-        
+       #%% 
 def PrintDirection(imageDirection,DimensionOut):
     vnlMatrix = imageDirection.GetVnlMatrix()
     for i in range(DimensionOut):

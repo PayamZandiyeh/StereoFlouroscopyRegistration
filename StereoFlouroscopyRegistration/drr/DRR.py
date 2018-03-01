@@ -1,4 +1,4 @@
-# This script generates Digitally Reconstructed Radiograph (DRR) from a given 
+e# This script generates Digitally Reconstructed Radiograph (DRR) from a given 
 # 3D image to given 2D image plane(s)
 
 import itk # imports insight Toolkit
@@ -35,7 +35,7 @@ verbose = False      # Verbose details of all steps.
 
 
 #%%
-nCam = 3 # Number of cameras 
+nCam = 2 # Number of cameras 
 calibrationFile = ['/Volumes/Storage/Projects/Registration/QuickData/OAKneeCadaverCd001_NM_Cam1.txt' ,    # Calibration file for Camera 1
                    '/Volumes/Storage/Projects/Registration/QuickData/OAKneeCadaverCd001_NM_Cam2.txt' ]    # Calibration file for Camera 2
 
