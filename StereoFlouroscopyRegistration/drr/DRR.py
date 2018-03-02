@@ -1,21 +1,30 @@
 # This script generates Digitally Reconstructed Radiograph (DRR) from a given 
 # 3D image to given 2D image plane(s)
 
-import itk # imports insight Toolkit
-import numpy as np
-import sys
-import datetime
-import Functions
-import CalibrationUsingJointTrack 
+#%% -------------------------------- DEFAULT INPUTS ---------------------------
+input_filename  = ''
+outputDirectory = ''
+outputExtension = '.nii' # Store the output image in nifti format. 
+threshold  = 0.
+defaultPixelValue = 0
+minOut = 0
+maxOut = 255
+
+rot = [0.,0.,0.]   # Rotation in degrees in x, y, and z direction. 
+trs = [0. ,0. ,0.]   # translation in x, y, and z directions. 
+cor = [0. ,0. ,0.]   # offset of the rotation from the center of image (3D)
+
+outSize = [512,512,1] # The size of output image
 
 
-#%% -------------------------------- Generated Inputs --------------------------------- 
-direction = np.identity(3,dtype=np.double)
-#direction[0,:] = [np.sqrt()/2,-np.sqrt(1)/2,0.] # Creating a non identity direction output just for testing. 
-#direction[1,:] = [np.sqrt(1)/2, np.sqrt(3)/2,0.] # Creating a non identity direction output just for testing. 
+verbose = False      # Verbose details of all steps. 
+
+nCam = 2 # Number of cameras 
 
 
-#%% -------------------------------- INPUTS --------------------------------- 
+
+
+#%% -------------------------------- INPUTS ----------------------------------- 
 input_filename  = '/Volumes/Storage/Projects/Registration/QuickData/OA-BEADS-CT.nii'
 outputDirectory = '/Volumes/Storage/Projects/Registration/QuickData/'
 outputExtension = '.nii' # Store the output image in nifti format. 
@@ -33,11 +42,21 @@ outSize = [512,512,1] # The size of output image
 
 verbose = False      # Verbose details of all steps. 
 
-
-#%%
 nCam = 2 # Number of cameras 
 calibrationFile = ['/Volumes/Storage/Projects/Registration/QuickData/OAKneeCadaverCd001_NM_Cam1.txt' ,    # Calibration file for Camera 1
                    '/Volumes/Storage/Projects/Registration/QuickData/OAKneeCadaverCd001_NM_Cam2.txt' ]    # Calibration file for Camera 2
+
+
+#%% ------------------------------- Import Libraries ------------------------
+import itk # imports insight Toolkit
+import numpy
+import sys
+import datetime
+import Functions
+import CalibrationUsingJointTrack 
+
+#%%
+
 
 if len(calibrationFile) != nCam :
     raise Exception('Number of Calibration files', len(calibrationFile),'do not correspond with the number of Cameras',nCam)
@@ -79,7 +98,7 @@ if verbose :
 TransformType = itk.CenteredEuler3DTransform[itk.D]
 transform     = TransformType.New()
 
-transform.SetRotation(np.deg2rad(rot[0]),np.deg2rad(rot[1]),np.deg2rad(rot[2])) # Setting the rotation of the transform
+transform.SetRotation(numpy.deg2rad(rot[0]),numpy.deg2rad(rot[1]),numpy.deg2rad(rot[2])) # Setting the rotation of the transform
 transform.SetTranslation(itk.Vector.D3(trs))    # Setting the translation of the transform
 transform.SetComputeZYX(True)  # The order of rotation will be ZYX. 
 
@@ -87,7 +106,7 @@ imOrigin = inputImage.GetOrigin()                   # Get the origin of the imag
 inRes    = inputImage.GetSpacing()                  # Get the resolution of the input image.
 inSiz    = inputImage.GetBufferedRegion().GetSize() # Get the size of the input image.
 
-center = itk.Point.D3(imOrigin) + np.multiply(inRes,inSiz)/2. # Setting the center of rotation as center of 3D object + offset determined by cor. 
+center = itk.Point.D3(imOrigin) + numpy.multiply(inRes,inSiz)/2. # Setting the center of rotation as center of 3D object + offset determined by cor. 
 
 transform.SetCenter(center)                     # Setting the center of rotation. 
 
