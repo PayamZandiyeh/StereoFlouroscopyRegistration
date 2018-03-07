@@ -1,7 +1,6 @@
-from PIL import Image as image
-from PIL.TiffTags import TAGS
 import numpy
 import os
+# import itk
 import SimpleITK as sitk
 
 class CalibrationTool:
@@ -88,6 +87,7 @@ class CalibrationTool:
     def write_new_image(self, output_path):
         for i in range(0, len(self.image_all)-1):
             img = sitk.ReadImage(os.path.join(self.camera_path, self.image_all[i]))
+ #           img = itk.imread(os.path.join(self.camera_path, self.image_all[i])
             img_vol = sitk.JoinSeries(img)
             corrected_img = self.write_metadata(img_vol)
 
