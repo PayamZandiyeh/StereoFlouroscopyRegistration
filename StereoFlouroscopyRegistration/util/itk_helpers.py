@@ -105,3 +105,30 @@ def set_itk_image_direction(image, direction):
     for ii in range(dimension):
         for jj in range(dimension):
             direction_as_vnl_matrix.put(ii, jj, direction[ii][jj])
+
+def change_image_direction(oldDirection,newDirection,DimensionOut):
+    '''
+        change_image_direction(oldDirection,newDirection,DimensionOut)
+        Changes the old Direction to a new direction (given the image dimension).
+        Input Arguments:
+        oldDirection : The original direction of the image e.g. image.GetDirection()
+        newDirection : The direction that we like to set the image direction to.
+        DimensionOut : The dimension of the image that we like to output (2D or 3D)
+        
+        '''
+    #%%
+    vnlMatrix = oldDirection.GetVnlMatrix()
+    for i in range(DimensionOut):
+        for j in range(DimensionOut):
+            vnlMatrix.put(i,j,newDirection[i,j])
+
+
+#%%
+def print_direction(imageDirection,DimensionOut):
+    vnlMatrix = imageDirection.GetVnlMatrix()
+    for i in range(DimensionOut):
+        for j in range(DimensionOut):
+            print "{:>8.4f}".format(vnlMatrix.get(i,j)),
+        print
+
+
