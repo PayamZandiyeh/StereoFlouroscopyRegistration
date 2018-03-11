@@ -123,7 +123,6 @@ def change_image_direction(oldDirection,newDirection,DimensionOut):
             vnlMatrix.put(i,j,newDirection[i,j])
 
 
-#%%
 def print_direction(imageDirection,DimensionOut):
     vnlMatrix = imageDirection.GetVnlMatrix()
     for i in range(DimensionOut):
@@ -131,4 +130,145 @@ def print_direction(imageDirection,DimensionOut):
             print "{:>8.4f}".format(vnlMatrix.get(i,j)),
         print
 
-
+def get_transform_direction(transform):
+    vnl_matrix = transform.GetMatrix().GetVnlMatrix()
+    return get_vnl_matrix(vnl_matrix)
+    
+def get_vnl_matrix(VnlMatrix):
+    dummy = np.zeros((3,3))
+    for ii in range(3):
+        for jj in range(3):
+            dummy[ii,jj]=VnlMatrix.get(ii,jj)
+    return dummy
+    
+def rigid_body_transform3D(input_filename,output_filename,rot=[0.,0.,0.],t=[0.,0.,0.],cor=[0.,0.,0.],threshold=0.,default_pixel_value=0,min_out=0,max_out=255,verbose=False):
+    """This function makes a rigid body transform on the 3D volume of image and writes it in the output"""
+    #    input_filename  = '/Volumes/Storage/Projects/Registration/QuickData/OA-BEADS-CT.nii'
+    #    output_filename = '/Volumes/Storage/Projects/Registration/QuickData/transformed_ct.nii'
+    #    
+    #    threshold  = 0.
+    #    default_pixel_value = 100
+    #    min_out = 0
+    #    max_out = 255
+    #    
+    #    rot = [40. ,0. ,0.]   # Rotation in degrees in x, y, and z direction. 
+    #    t   = [100. ,100. ,100.]   # translation in x, y, and z directions. 
+    #    cor = [0. ,0. ,0.]   # offset of the rotation from the center of image (3D)
+    #    
+    #    
+    #    verbose = False      # Verbose details of all steps. 
+    #    
+    
+    #% ------------------------------- Import Libraries ------------------------
+    import itk # imports insight Toolkit
+    import numpy
+    import sys
+    #import StereoFlouroscopyRegistration.util.itk_helpers as Functions
+    #%%------------------ Starting the main body of the code ---------------- 
+    # -------------------- Reader -------------------------
+    InputPixelType  = itk.ctype("short")
+    DimensionIn  = 3
+    
+    InputImageType  = itk.Image[InputPixelType , DimensionIn ]
+    
+    
+    ReaderType = itk.ImageFileReader[InputImageType]
+    reader     = ReaderType.New()
+    reader.SetFileName(input_filename)
+    
+    try:
+        print("Reading image: " + input_filename)
+        reader.Update()
+        print("Image Read Successfully")
+    except ValueError: 
+        print("ERROR: ExceptionObject cauth! \n")
+        print(ValueError)
+        sys.exit()
+        
+    inputImage = reader.GetOutput()
+    
+    if verbose :
+        print(inputImage)
+        
+    inOrigin     = inputImage.GetOrigin()                   # Get the origin of the image.
+    inSpacing    = inputImage.GetSpacing()                  # Get the resolution of the input image.
+    inSize       = inputImage.GetBufferedRegion().GetSize() # Get the size of the input image.
+    inDirection  = inputImage.GetDirection()
+    
+    #%% ------------------ Transformation 
+    # This part is inevitable since the interpolator (Ray-cast) and resample Image
+    # image filter uses a Transformation -- Here we set it to identity. 
+    TransformType = itk.CenteredEuler3DTransform[itk.D]
+    transform     = TransformType.New()
+    
+    direction_mat = get_vnl_matrix(inDirection.GetVnlMatrix())
+    
+    rot = numpy.dot(-1,rot)           # Due to Direction of transform mapping ( 8.3.1 in the ITK manual)
+    t   = numpy.dot(-1,t  )           # Due to Direction of transform mapping ( 8.3.1 in the ITK manual)
+    
+    
+    
+    rot = direction_mat.dot(numpy.transpose(rot))           
+    t   = direction_mat.dot(numpy.transpose(t  ))          
+    
+    
+    transform.SetRotation(numpy.deg2rad(rot[0]),numpy.deg2rad(rot[1]),numpy.deg2rad(rot[2])) # Setting the rotation of the transform
+    transform.SetTranslation(itk.Vector.D3(t))    # Setting the translation of the transform
+    transform.SetComputeZYX(True)  # The order of rotation will be ZYX. 
+    
+    center = direction_mat.dot(inOrigin)+ numpy.multiply(inSpacing,inSize)/2. # Setting the center of rotation as center of 3D object + offset determined by cor. 
+    center = direction_mat.dot(center)-t # Convert the image to the local coordinate system. 
+    transform.SetCenter(center)                     # Setting the center of rotation. 
+    
+    if verbose :
+        print(transform)
+    #% ------------------ Interpolator ------------------------------------
+    InterpolatorType = itk.LinearInterpolateImageFunction[InputImageType,itk.D]
+    interpolator = InterpolatorType.New()
+     #%%----------------- Resample Image Filter -----------------------
+     # In this part the resample image filter to map a 3D image to 2D image plane with desired specs is designed
+    FilterType = itk.ResampleImageFilter[InputImageType,InputImageType]                     # Defining the resample image filter type. 
+    resamplefilter = FilterType.New()                                                       # Pointer to the filter
+#    R = Functions.get_transform_direction(transform)
+#    T = numpy.transpose(t)
+#    
+    outOrigin = inOrigin - t #+ R.dot(numpy.transpose(direction_mat.dot(inOrigin)))
+#    transform_matrix = Functions.get_vnl_matrix(transform.GetMatrix().GetVnlMatrix())
+    #outDirection = transform_matrix.dot(direction_mat)
+    outDirection = inDirection
+    scaling = 1 # the scaling factor for the image. 
+    
+    outSize= [scaling*inSize[0],scaling*inSize[1],inSize[2]]
+    
+    resamplefilter.SetInput(inputImage)                                                     # Setting the input image data 
+    resamplefilter.SetDefaultPixelValue(default_pixel_value)                                # Setting the default Pixel value
+    resamplefilter.SetInterpolator(interpolator)                                            # Setting the interpolator
+    resamplefilter.SetTransform(transform)                                                  # Setting the transform
+    resamplefilter.SetSize(outSize)                                                         # Setting the size of the output image. 
+    resamplefilter.SetOutputSpacing(inSpacing)                                              # Setting the spacing(resolution) of the output image. 
+    # Functions.change_image_direction(resamplefilter.GetOutputDirection(),outDirection,3)
+    resamplefilter.SetOutputOrigin(outOrigin)                                               # Setting the output origin of the image
+    resamplefilter.SetOutputDirection(outDirection)                                         # Setting the output direction of the image. 
+    resamplefilter.Update()                                                                 # Updating the resample image filter.
+    
+    if verbose:
+        print(resamplefilter)
+    
+    
+    #%% ------------------ Writer ------------------------------------
+    # The output of the resample filter can then be passed to a writer to
+    # save the DRR image to a file.
+        
+    WriterType=itk.ImageFileWriter[InputImageType]
+    writer=WriterType.New()
+    writer.SetFileName(output_filename)
+    writer.SetInput(resamplefilter.GetOutput())
+    
+    try:
+        print("Writing the transformed Volume at : " + output_filename)
+        writer.Update()
+        print("Volume Printed Successfully")
+    except ValueError: 
+        print("ERROR: ExceptionObject caugth! \n")
+        print(ValueError)
+        sys.exit()
