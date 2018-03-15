@@ -8,8 +8,8 @@ output_filename = ['test_cam1.nii', # output file name 1
 sizeOutput = [1000,1000,1] # The size of output image
 threshold  = 0. 
 
-rot = [0.,0.,0.]     # NOT WORKING NOW __ rotation in degrees in x, y, and z direction. 
-trs = [0. ,0. ,0.]   # NOT WORKING NOW __ translation in x, y, and z directions. 
+rot = [0., 90.,  0.]     # NOT WORKING NOW __ rotation in degrees in x, y, and z direction. 
+t   = [150. ,50. ,50.]   # NOT WORKING NOW __ translation in x, y, and z directions. 
 cor = [0. ,0. ,0.]   # NOT WORKING NOW __ offset of the rotation from the center of image (3D)
 
 verbose = False      # verbose details of all steps. 
@@ -19,7 +19,7 @@ calibration_files = ['cal_cam1.txt', # calibration file for camera 1 in sagittal
                      'cal_cam2.txt'] # calibration file for camera 2 in frontal plane
 
 execfile('Script_Reader.py')    # Read the files. 
-    
+#%%
 for ii in range(len(calibration_files)):
 #%% Generating the drr 
     execfile('Script_SetCalibrationInfo.py')    # load calibration information of the calibraiton file. 
