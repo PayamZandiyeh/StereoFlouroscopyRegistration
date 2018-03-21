@@ -144,14 +144,19 @@ int main(int argc, char* argv[] )
       << "[outputDirectory] <inputTransform>" << std::endl;
     return EXIT_FAILURE;
     }
-    bool verbose = true;
+  bool verbose = true;
+  bool imageDetails = true;
+  bool writeImage   = true;
+  //bool writeVolume = true; // Decide if we like to write the image read directly to make sure it is read correctly.
+    
+    
   const unsigned int Dimensions = 3;
   
-  typedef itk::Image<short,Dimensions>  FixedImageType;
-  typedef itk::Image<short,Dimensions>  MovingImageType;
-  typedef itk::MultiResolutionMultiImageToImageRegistrationMethod<FixedImageType,MovingImageType >    RegistrationType;
-
-  RegistrationType::Pointer registration = RegistrationType::New();
+  typedef itk::Image<float,Dimensions>  FixedImageType;  // Fixed images.
+  typedef itk::Image<float,Dimensions>  MovingImageType; // Moving images.
+  typedef itk::MultiResolutionMultiImageToImageRegistrationMethod<FixedImageType,MovingImageType >    RegistrationType; // multi image registration.
+ 
+  RegistrationType::Pointer registration = RegistrationType::New(); // new registration pointer
 
   typedef RegistrationObserver<FixedImageType,MovingImageType> RegistrationObserverType;
   
@@ -165,16 +170,17 @@ int main(int argc, char* argv[] )
 //----------------------------------------------------------------------------
 // Create the transform
 //----------------------------------------------------------------------------
-  typedef itk::Euler3DTransform< double > TransformType;
+  typedef itk::Euler3DTransform< double > TransformType; // The PatchedRayCastInterpolateImageFunction only accepts rigid body transformation (limitation).
 
-  TransformType::Pointer transform = TransformType::New();
-  transform->SetIdentity();
+  TransformType::Pointer transform = TransformType::New(); // Creating a pointer to transform class.
+  transform->SetIdentity(); // Setting the transform to identity
+  transform->SetComputeZYX(true); // Compute the Euler angles in ZYX order.
   registration->SetTransform( transform );
     
-    if (verbose) {
+  if (verbose) {
         std::cout << "TRANSFORMATION:" << transform << std::endl; // Print the details of transformation.
         std::cout << "REGISTRATION: " << registration << std::endl; // Print the details of registration.
-    }
+    } // Print the transform and registration initiation.
 //----------------------------------------------------------------------------
 // Load the moving image
 //----------------------------------------------------------------------------
@@ -192,14 +198,16 @@ int main(int argc, char* argv[] )
     std::cout << e.GetDescription() << std::endl;
     return EXIT_FAILURE;
     }
-    if (verbose) {
-        std::cout << "Input Moving Image details : " << movingReader->GetOutput() << std::endl;
-    }
     
-  registration->SetMovingImage( movingReader->GetOutput() );
-
-  MovingImagePyramidType::Pointer movingPyramidFilter = 
-    MovingImagePyramidType::New();
+  if (verbose) {
+        std::cout << "Input Moving Image : " << movingReader->GetFileName() << std::endl;
+      if (imageDetails){
+          std::cout << "Input Moving Image details : " << *movingReader->GetOutput() << std::endl;
+      }
+    } // Print the imported image.
+    
+  registration->SetMovingImage( movingReader->GetOutput());
+  MovingImagePyramidType::Pointer movingPyramidFilter = MovingImagePyramidType::New();
   registration->SetMovingImagePyramid( movingPyramidFilter );
 
   argc--;
@@ -210,15 +218,11 @@ int main(int argc, char* argv[] )
 // Load the fixed images
 //----------------------------------------------------------------------------
   typedef FixedImageType::ConstPointer          FixedImageConstPointer;
-  typedef itk::ImageFileReader<FixedImageType>  FixedImageReaderType;
+  typedef itk::ImageFileReader<FixedImageType>  FixedImageReaderType  ;
 
-  typedef itk::PatchedRayCastInterpolateImageFunction<MovingImageType,
-                                                     double> InterpolatorType;
+  typedef itk::PatchedRayCastInterpolateImageFunction<MovingImageType, double> InterpolatorType;
   typedef InterpolatorType::InputPointType FocalPointType;
-
-  typedef itk::MultiResolutionPyramidImageFilter<
-                                    FixedImageType,
-                                    FixedImageType  >  FixedImagePyramidType;
+  typedef itk::MultiResolutionPyramidImageFilter<FixedImageType,FixedImageType  >  FixedImagePyramidType;
 
   const unsigned int FImgTotal = atoi( argv[0] );
   argc--;
@@ -240,7 +244,14 @@ int main(int argc, char* argv[] )
 
     FixedImageConstPointer fixedImage = fixedReader->GetOutput();
     registration->AddFixedImage( fixedImage );
-
+        if (verbose){
+            std::cout << "input image " << f << " : " << fixedReader->GetFileName() << std::endl;
+            if (imageDetails){
+                std::cout << "Image Details: " << fixedImage << std::endl;
+            }
+            
+        }
+    
     registration->AddFixedImageRegion( fixedImage->GetBufferedRegion() );
 
     InterpolatorType::Pointer interpolator = InterpolatorType::New();
@@ -253,8 +264,7 @@ int main(int argc, char* argv[] )
     interpolator->SetThreshold( 0.0 );
     registration->AddInterpolator( interpolator );
 
-    FixedImagePyramidType::Pointer fixedPyramidFilter = 
-      FixedImagePyramidType::New();
+    FixedImagePyramidType::Pointer fixedPyramidFilter = FixedImagePyramidType::New();
     registration->AddFixedImagePyramid( fixedPyramidFilter );
 
     argc -= 4;
@@ -265,8 +275,7 @@ int main(int argc, char* argv[] )
 //----------------------------------------------------------------------------
 // Create the multi metric
 //----------------------------------------------------------------------------
-  typedef itk::NormalizedGradientCorrelationMultiImageToImageMetric<
-    FixedImageType, MovingImageType> MultiMetricType;
+  typedef itk::NormalizedGradientCorrelationMultiImageToImageMetric<FixedImageType, MovingImageType> MultiMetricType;
 
   MultiMetricType::Pointer multiMetric = MultiMetricType::New();
   registration->SetMultiMetric( multiMetric );
@@ -289,14 +298,13 @@ int main(int argc, char* argv[] )
   optimizer->SetScales( scales );
 
   optimizer->SetMaximize( true );
-  optimizer->SetMaximumIteration( 100 );
+  optimizer->SetMaximumIteration( 100 ); // was 100 before
   optimizer->SetMaximumLineIteration( 10 );
   optimizer->SetValueTolerance( 1e-3 );
   optimizer->SetUseUnitLengthGradient( true );
   optimizer->SetToPolakRibiere();
   optimizer->SetCatchGetValueException( true );
-  optimizer->SetMetricWorstPossibleValue( 
-    -itk::NumericTraits<MultiMetricType::MeasureType>::infinity() );
+  optimizer->SetMetricWorstPossibleValue( -itk::NumericTraits<MultiMetricType::MeasureType>::infinity() );
 
 //These parameters will be halved at the begginng of each resolution level
   optimizer->SetStepTolerance( 0.08 );
@@ -353,7 +361,7 @@ int main(int argc, char* argv[] )
 // Read the transform file, if given
 //----------------------------------------------------------------------------
 
-  if( argc > 0 ) // if there are still arguments in the command line
+  if( argc > 0 ) // if there are still arguments in the command line (optional Transform.txt file
     {
     itk::TransformFileReader::Pointer transformReader = 
       itk::TransformFileReader::New();
