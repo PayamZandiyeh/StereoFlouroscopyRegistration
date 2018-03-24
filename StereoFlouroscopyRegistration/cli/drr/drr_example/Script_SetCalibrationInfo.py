@@ -10,3 +10,8 @@ cal.SetGlobalOriginForImagePlane()
 focalPoint      = cal.GetFocalPoint()
 directionOutput = cal.GetDirectionMatrix()
 originOutput    = cal.GetGlobalOriginForImagePlane()
+
+if verbose:
+    print(focalPoint)
+    print(directionOutput)
+    print(originOutput)

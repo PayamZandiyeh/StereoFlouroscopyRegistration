@@ -5,7 +5,7 @@ WriterType = itk.ImageFileWriter[OutputImageType]
 writer = WriterType.New()
 
 writer.SetFileName(output_filename[ii])
-writer.SetInput(rescaler.GetOutput())
+writer.SetInput(last_filter_output) # set the input as the output of filtering process. 
 
 try:
     print("Writing image: " + output_filename[ii])
@@ -15,3 +15,7 @@ except ValueError:
     print("ERROR: ExceptionObject cauth! \n")
     print(ValueError)
     sys.exit()
+
+if verbose: 
+    print('Details of image: ')
+    print(last_filter_output)

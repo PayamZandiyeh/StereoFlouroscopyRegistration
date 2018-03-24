@@ -1,22 +1,22 @@
 execfile('Script_Libraries.py') # set the import libraries. 
 
-input_filename  = 'transformed_ct.nii' # the ct volume. 
-
-output_filename = ['test_cam1.nii', # output file name 1 
-                   'test_cam2.nii'] # output file name 2
+#input_filename  = '/Volumes/Storage/Projects/Registration/BertelsenRegistration/src/Data/moving.thr.mha' # the ct volume. 
+input_filename = 'knee_ct_volume.nii'
+output_filename = ['knee_test_cam1.nii', # output file name 1 
+                   'knee_test_cam2.nii'] # output file name 2
 
 sizeOutput = [1000,1000,1] # The size of output image
 threshold  = 0. 
 
-rot = [0., 90.,  0.]     # NOT WORKING NOW __ rotation in degrees in x, y, and z direction. 
-t   = [150. ,50. ,50.]   # NOT WORKING NOW __ translation in x, y, and z directions. 
-cor = [0. ,0. ,0.]   # NOT WORKING NOW __ offset of the rotation from the center of image (3D)
+rot = [0., 0.,  0.]     # rotation in degrees in x, y, and z direction. 
+t   = [0. ,0. ,0.]   # translation in x, y, and z directions. 
+cor = [0. ,0. ,0.]       #  offset of the rotation from the center of image (3D)
 
-verbose = False      # verbose details of all steps. 
+verbose = False          # verbose details of all steps. 
 
-transformed_vol = False # keep it for now -- in the future the transformed volume can be printed. 
-calibration_files = ['cal_cam1.txt', # calibration file for camera 1 in sagittal plane
-                     'cal_cam2.txt'] # calibration file for camera 2 in frontal plane
+transformed_vol = False  # keep it for now -- in the future the transformed volume can be printed. 
+calibration_files = ['knee_cal_cam1.txt', # calibration file for camera 1 in sagittal plane
+                     'knee_cal_cam2.txt'] # calibration file for camera 2 in frontal plane
 
 execfile('Script_Reader.py')    # Read the files. 
 #%%
@@ -37,4 +37,3 @@ for ii in range(len(calibration_files)):
 #Functions.rigid_body_transform3D(input_filename='/Volumes/Storage/Projects/Registration/QuickData/OA-BEADS-CT.nii',\
 #                                  output_filename='/Volumes/Storage/Projects/Registration/QuickData/transformed_ct.nii',\
 #                                    t =[-1.14648438, 132.85351562, 502.09999385],rot = [-90.,0.,90.])
-

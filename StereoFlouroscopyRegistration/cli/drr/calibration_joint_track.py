@@ -92,7 +92,7 @@ class CalibrationTool:
         self.SetImageDirectionN([float(x) for x in self.CalibrationFileText[7].strip().split()])                                # The normal to the image plane. 
         self.SetImageDirectionU([float(x) for x in self.CalibrationFileText[8].strip().split()])                                # The Upward direction of the 2D image
         self.SetImageDirectionH([float(x) for x in numpy.cross(self.GetImageDirectionU(), self.GetImageDirectionN()).tolist()])                     # The Horizontal direction of the 2D image    UxN = H  
-        self.SetDirectionMatrix(numpy.matrix([self.GetImageDirectionH(),self.GetImageDirectionU(),self.GetImageDirectionN()]))
+        self.SetDirectionMatrix(numpy.transpose(numpy.matrix([self.GetImageDirectionH(),self.GetImageDirectionU(),self.GetImageDirectionN()])))
         
     def SetImageHeader(self,inputFileName,outputFileName):
         self.SetImageFileName(inputFileName) # Setting the image file name 
@@ -145,13 +145,13 @@ class CalibrationTool:
         deltaU = (float(h) / 2.0) * self.PixelSize[0]
         pdist = self.GetPrincipalDistance()
     
-        P = numpy.matrix([deltaX, deltaY, 0])
-        Q = numpy.matrix([deltaV, deltaU, 0])
+        P = numpy.matrix([deltaX, deltaY, 0]) # in local image plane -- h direction.  (horizontal)
+        Q = numpy.matrix([deltaV, deltaU, 0]) # in local image plane -- u direction.  (up)
     
         M = numpy.matrix(self.GetDirectionMatrix())
         
         R = M*numpy.transpose(P+Q)                                          # a vector from bottom left corner of image to the principal point.
-        N = numpy.transpose(pdist*numpy.matrix(self.GetImageDirectionN()))  # a vector from the x-ray source to the principal point
+        N = numpy.transpose(pdist*numpy.matrix(self.GetImageDirectionN()))  # a vector from principal point to x-ray source
         F = numpy.transpose(numpy.matrix(self.GetFocalPoint()))             # a vector from global coordinate system to the x-ray source. 
     
         origin = numpy.transpose(F - N - R)                                 # A vector from the global coordinate system to the bottom left origin of the image. 
