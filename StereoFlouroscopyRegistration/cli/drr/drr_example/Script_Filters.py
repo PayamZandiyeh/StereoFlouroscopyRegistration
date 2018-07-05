@@ -36,7 +36,7 @@ FlipFilterType = itk.FlipImageFilter[OutputImageType]
 flipfilter = FlipFilterType.New()
 
 flipfilter.SetFlipAxes([0,0,0]) # Flip the axes along x and y but leave z intact.  
-flipfilter.SetInput(rescaler.GetOutput()) # Setting the input to the flip filter.
+flipfilter.SetInput(filteringOutput) # Setting the input to the flip filter.
 
 filteringOutput = flipfilter.GetOutput()
 

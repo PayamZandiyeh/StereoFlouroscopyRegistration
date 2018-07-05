@@ -146,9 +146,7 @@ int main(int argc, char* argv[] )
     }
   bool verbose = true;
   bool imageDetails = true;
-  bool writeImage   = true;
-  //bool writeVolume = true; // Decide if we like to write the image read directly to make sure it is read correctly.
-    
+  //bool print_volume = false; // print the input volume to make sure it is read correctly.
     
   const unsigned int Dimensions = 3;
   
@@ -174,7 +172,7 @@ int main(int argc, char* argv[] )
 
   TransformType::Pointer transform = TransformType::New(); // Creating a pointer to transform class.
   transform->SetIdentity(); // Setting the transform to identity
-  transform->SetComputeZYX(true); // Compute the Euler angles in ZYX order.
+  //transform->SetComputeZYX(true); // Compute the Euler angles in ZYX order.
   registration->SetTransform( transform );
     
   if (verbose) {
@@ -245,7 +243,7 @@ int main(int argc, char* argv[] )
     FixedImageConstPointer fixedImage = fixedReader->GetOutput();
     registration->AddFixedImage( fixedImage );
         if (verbose){
-            std::cout << "input image " << f << " : " << fixedReader->GetFileName() << std::endl;
+            std::cout << "input image " << f+1 << " : " << fixedReader->GetFileName() << std::endl;
             if (imageDetails){
                 std::cout << "Image Details: " << fixedImage << std::endl;
             }
@@ -276,7 +274,6 @@ int main(int argc, char* argv[] )
 // Create the multi metric
 //----------------------------------------------------------------------------
   typedef itk::NormalizedGradientCorrelationMultiImageToImageMetric<FixedImageType, MovingImageType> MultiMetricType;
-
   MultiMetricType::Pointer multiMetric = MultiMetricType::New();
   registration->SetMultiMetric( multiMetric );
 
@@ -434,7 +431,9 @@ int main(int argc, char* argv[] )
     std::cerr << "Could not open input matrix file " << inputMatrixPath << std::endl;
     }
 
-
+    // Making sure that the images are read correctly
+    
+    
 //----------------------------------------------------------------------------
 // Start the registration
 //----------------------------------------------------------------------------
@@ -501,10 +500,8 @@ int main(int argc, char* argv[] )
 //----------------------------------------------------------------------------
 // Save projected images
 //----------------------------------------------------------------------------
-  typedef itk::ResampleImageFilter<MovingImageType,
-                                   FixedImageType>  ResamplerType;
-  typedef itk::SubtractImageFilter<FixedImageType,FixedImageType,
-                                   FixedImageType>  SubtracterType;
+  typedef itk::ResampleImageFilter<MovingImageType, FixedImageType>  ResamplerType;
+  typedef itk::SubtractImageFilter<FixedImageType,FixedImageType,FixedImageType>  SubtracterType;
   typedef itk::ImageFileWriter<FixedImageType>      WriterType;
 
 

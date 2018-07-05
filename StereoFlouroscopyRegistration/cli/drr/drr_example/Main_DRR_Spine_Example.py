@@ -1,15 +1,15 @@
 execfile('Script_Libraries.py') # set the import libraries. 
 
 #input_filename  = '/Volumes/Storage/Projects/Registration/BertelsenRegistration/src/Data/moving.thr.mha' # the ct volume. 
-input_filename = 'spine_ct_volume.mha'
-output_filename = ['spine_test_cam1.mha', # output file name 1 
-                   'spine_test_cam2.mha'] # output file name 2
+input_filename = '/Volumes/Storage/Projects/Registration/QuickData/spine_ct_volume.mha'
+output_filename = ['spine_test_cam1.nii', # output file name 1 
+                   'spine_test_cam2.nii'] # output file name 2
 
 sizeOutput = [512,512,1] # The size of output image
 threshold  = 0. 
 
-rot = [45., 0., 0.]       # rotation in degrees in x, y, and z direction. 
-t   = [0. ,0. ,50.]       # translation in x, y, and z directions. 
+rot = [0., 0., 0.]       # rotation in degrees in x, y, and z direction. 
+t   = [0. ,0. ,0.]       # translation in x, y, and z directions. 
 cor = [0. ,0. ,0.]       #  offset of the rotation from the center of image (3D)
 
 verbose = False          # verbose details of all steps. 

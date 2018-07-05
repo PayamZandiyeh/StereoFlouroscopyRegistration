@@ -1,4 +1,6 @@
 .DS_Store
 *.egg-info
 *.pyc
+*.mha
+*.nii
 __pycache__/

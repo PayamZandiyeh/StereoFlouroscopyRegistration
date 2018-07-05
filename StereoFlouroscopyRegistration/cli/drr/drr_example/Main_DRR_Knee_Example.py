@@ -1,16 +1,16 @@
 execfile('Script_Libraries.py') # set the import libraries. 
 
 #input_filename  = '/Volumes/Storage/Projects/Registration/BertelsenRegistration/src/Data/moving.thr.mha' # the ct volume. 
-input_filename = 'knee_ct_volume.nii'
+input_filename = '/Volumes/Storage/Projects/Registration/QuickData/knee_ct_volume_identity.nii'
 output_filename = ['knee_test_cam1.nii', # output file name 1 
                    'knee_test_cam2.nii'] # output file name 2
 
-sizeOutput = [1000,1000,1] # The size of output image
+sizeOutput = [800,800,1] # The size of output image
 threshold  = 0. 
 
-rot = [0., 0.,  0.]     # rotation in degrees in x, y, and z direction. 
-t   = [0. ,0. ,0.]   # translation in x, y, and z directions. 
-cor = [0. ,0. ,0.]       #  offset of the rotation from the center of image (3D)
+rot = [0., 0., 0.]     # rotation in degrees in x, y, and z direction. 
+t   = [0. ,0. ,0.]     # translation in x, y, and z directions. 
+cor = [0. ,0. ,0.]     #  offset of the rotation from the center of image (3D)
 
 verbose = False          # verbose details of all steps. 
 
